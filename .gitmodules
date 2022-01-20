@@ -1,0 +1,3 @@
+[submodule "go-cqhttp"]
+	path = go-cqhttp
+	url = ./go-cqhttp
