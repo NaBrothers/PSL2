@@ -11,8 +11,11 @@ import com.nabrothers.psl.server.service.RequestService;
 import com.nabrothers.psl.server.service.handler.*;
 import com.nabrothers.psl.server.utils.RequestUtils;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,10 +25,20 @@ public class RequestServiceImpl implements RequestService {
 
     Map<EventType, RequestHandler> handlers = new HashMap<>();
 
-    {
-        handlers.put(EventType.HEARTBEAT, new HeartbeatHandler());
-        handlers.put(EventType.PRIVATE_MESSAGE, new PrivateMessageHandler());
-        handlers.put(EventType.GROUP_MESSAGE, new GroupMessageHandler());
+    @Resource
+    private GroupMessageHandler groupMessageHandler;
+
+    @Resource
+    private PrivateMessageHandler privateMessageHandler;
+
+    @Resource
+    private HeartbeatHandler heartbeatHandler;
+
+    @PostConstruct
+    private void init() {
+        handlers.put(EventType.HEARTBEAT, heartbeatHandler);
+        handlers.put(EventType.PRIVATE_MESSAGE, privateMessageHandler);
+        handlers.put(EventType.GROUP_MESSAGE, groupMessageHandler);
     }
 
     @Override

@@ -1,18 +1,26 @@
 package com.nabrothers.psl.server.service.handler;
 
 import com.alibaba.fastjson.JSONObject;
+import com.nabrothers.psl.server.dto.GroupDTO;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
+import com.nabrothers.psl.server.service.GroupService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.*;
 
+@Component
 @Log4j2
 public class GroupMessageHandler extends MessageHandler{
     private static final String LOG_SYNTAX = "收到群 %s(%d) 内 %s(%d) 的消息: %s";
 
     private static Map<Long, String> groupNames = new HashMap<>();
+
+    @Resource
+    private GroupService groupService;
 
     @Override
     public void doHandle(CQHttpRequest request) {
@@ -25,11 +33,9 @@ public class GroupMessageHandler extends MessageHandler{
         if (groupNames.get(id) != null) {
             return groupNames.get(id);
         } else {
-            String res = HttpUtils.doGet("http://127.0.0.1:5700/get_group_info?group_id=" + id);
-            JSONObject groupInfo = JSONObject.parseObject(res);
-            String groupName = groupInfo.getJSONObject("data").getString("group_name");
-            groupNames.put(id, groupName);
-            return groupName;
+            GroupDTO groupDTO = groupService.getGroupById(id);
+            groupNames.put(id, groupDTO.getName());
+            return groupDTO.getName();
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.nabrothers.psl.server.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
@@ -13,7 +16,47 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
+@Log4j2
 public class HttpUtils {
+
+    private static final String url = "http://127.0.0.1:5700/";
+
+    public static JSONObject doGet(String cmd, JSONObject param) {
+        StringBuilder sb = new StringBuilder(url);
+        sb.append(cmd);
+        for (String key : param.keySet()) {
+            sb.append("?" + key + "=" + param.get(key));
+        }
+        String res = doGet(sb.toString());
+        if (res == null) {
+            log.error("HTTP_GET_ERROR: " + sb.toString());
+            return null;
+        }
+        JSONObject resObj = JSON.parseObject(res);
+        if (resObj.getIntValue("retcode") != 0) {
+            log.error("HTTP_GET_API_ERROR: " + sb.toString() + ", " + resObj.getString("wording"));
+            return null;
+        }
+        return resObj.getJSONObject("data");
+    }
+
+    public static JSONObject doPost(String cmd, JSONObject param) {
+        StringBuilder sb = new StringBuilder(url);
+        sb.append(cmd);
+        String res = doPost(sb.toString(), param.toJSONString());
+        if (res == null) {
+            log.error("HTTP_POST_ERROR: " + sb.toString());
+            return null;
+        }
+        JSONObject resObj = JSON.parseObject(res);
+        if (resObj.getIntValue("retcode") != 0) {
+            log.error("HTTP_POST_API_ERROR: " + sb.toString() + ", " + resObj.getString("wording"));
+            return null;
+        }
+        return resObj.getJSONObject("data");
+    }
+
+
     /**
      * @Description: 发送get请求
      */
