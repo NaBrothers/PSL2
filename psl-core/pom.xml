@@ -9,11 +9,71 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.nabrothers</groupId>
     <artifactId>psl-core</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.nabrothers</groupId>
+            <artifactId>psl-sdk</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${groupId}</groupId>
+                                    <artifactId>${artifactId}</artifactId>
+                                    <version>${version}</version>
+                                    <excludes>**/plugin.properties</excludes>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.basedir}/../psl-server/target/classes/</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.coderplus.maven.plugins</groupId>
+                <artifactId>copy-rename-maven-plugin</artifactId>
+                <version>1.0.1</version>
+                <executions>
+                    <execution>
+                        <id>rename-file</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>rename</goal>
+                        </goals>
+                        <configuration>
+                            <sourceFile>target/classes/plugin.properties</sourceFile>
+                            <destinationFile>${project.basedir}/../psl-server/target/plugins/${project.artifactId}.plugin.properties</destinationFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

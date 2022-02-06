@@ -1,6 +1,6 @@
 package com.nabrothers.psl.server.context;
 
-import com.nabrothers.psl.server.sdk.Handler;
+import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.server.utils.ApplicationContextUtils;
 import com.nabrothers.psl.server.utils.CommonUtils;
 import lombok.extern.log4j.Log4j2;
@@ -8,9 +8,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
-import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -62,12 +60,12 @@ public class HandlerContext {
                 List<String> commands = Arrays.asList(cmd.split(" "));
                 _parse(head, commands, method);
             }
+            packages.add(name);
+            log.info("插件包加载成功：" + name + ", 共加载 " + methods.size() + " 个命令");
         } catch (Exception e) {
             log.error("插件包加载失败：" + name, e);
             return;
         }
-        packages.add(name);
-        log.info("插件包加载成功：" + name);
     }
 
     private void _parse(Node node, List<String> commands, Method method) {
@@ -137,7 +135,13 @@ public class HandlerContext {
                     methodArgs.add(args.get(i));
                 }
             }
-            Object obj = ApplicationContextUtils.getBean(node.handler.method.getDeclaringClass());
+            Object obj;
+            try {
+                obj = ApplicationContextUtils.getBean(node.handler.method.getDeclaringClass());
+            } catch (Exception e) {
+                log.warn("Bean not found, create new instance: " + node.handler.method.getDeclaringClass());
+                obj = node.handler.method.getDeclaringClass().newInstance();
+            }
             String res = (String) node.handler.method.invoke(obj, methodArgs.toArray());
             return res;
         } catch (Exception e) {

@@ -9,8 +9,10 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>psl-server</module>
+<!--        psl-server必须最后加载-->
+        <module>psl-sdk</module>
         <module>psl-core</module>
+        <module>psl-server</module>
     </modules>
 
     <properties>

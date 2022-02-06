@@ -1,4 +1,4 @@
-package com.nabrothers.psl.server.sdk;
+package com.nabrothers.psl.sdk.annotation;
 
 import java.lang.annotation.*;
 
