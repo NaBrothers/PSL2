@@ -25,7 +25,8 @@ public class PluginManager {
             File pluginDir = new File("./psl-server/target/plugins");
             File[] properties = pluginDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(".plugin.properties"));
             if (properties == null) {
-                throw new FileNotFoundException("plugins文件夹");
+                log.warn("找不到plugins文件夹: " + pluginDir.getCanonicalPath());
+                return;
             }
             for (File property : properties) {
                 Properties p = new Properties();
@@ -36,7 +37,7 @@ public class PluginManager {
                 plugin.setInfo(p.getProperty("plugin.info"));
                 plugin.setAuthor(p.getProperty("plugin.author"));
                 plugin.setPackageName(p.getProperty("plugin.package"));
-                plugin.setPath(property.getPath());
+                plugin.setPath(property.getCanonicalPath());
                 log.info("加载插件\n" + plugin);
 
                 context.load(plugin.getPackageName());
