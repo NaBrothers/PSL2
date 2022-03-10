@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Log4j2
 public class RequestServiceImpl implements RequestService {
 
     Map<EventType, RequestHandler> handlers = new HashMap<>();
@@ -50,7 +51,8 @@ public class RequestServiceImpl implements RequestService {
         }
         PostType postType = PostType.getByName(postTypeStr);
         if (postType == null) {
-            throw new RuntimeException("不支持的请求类型：" + postTypeStr);
+            log.warn("不支持的请求类型：" + postTypeStr);
+            return;
         }
         switch (postType) {
             case MESSAGE:

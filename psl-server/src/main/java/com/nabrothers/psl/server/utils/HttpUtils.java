@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 
 @Log4j2
 public class HttpUtils {
@@ -23,9 +24,11 @@ public class HttpUtils {
 
     public static JSONObject doGet(String cmd, JSONObject param) {
         StringBuilder sb = new StringBuilder(url);
-        sb.append(cmd);
+        sb.append(cmd + "?");
         for (String key : param.keySet()) {
-            sb.append("?" + key + "=" + param.get(key));
+            try {
+                sb.append(key + "=" + URLEncoder.encode(param.get(key).toString(), "UTF-8") + "&");
+            } catch (Exception ignore) {}
         }
         String res = doGet(sb.toString());
         if (res == null) {
