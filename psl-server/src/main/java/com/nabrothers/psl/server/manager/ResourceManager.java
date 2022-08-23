@@ -1,5 +1,7 @@
 package com.nabrothers.psl.server.manager;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -21,10 +23,14 @@ public class ResourceManager {
                     String name = module.getName();
                     System.out.println(String.format("[%s] 加载模块资源", name));
 
-                    Process process1 = Runtime.getRuntime().exec(String.format("cp -r %s %s", module.getAbsolutePath() + "/target/classes/", "./psl-server/target/classes/"));
+                    String cmd1 = String.format("cp -r %s %s", module.getAbsolutePath() + "/target/classes/", "./psl-server/target/classes/");
+                    System.out.println(String.format("[%s] 复制classes：%s", name, cmd1));
+                    Process process1 = Runtime.getRuntime().exec(cmd1);
                     waitForReturn(process1);
 
-                    Process process2 = Runtime.getRuntime().exec(String.format("mv %s %s", "./psl-server/target/classes/plugin.properties", "./psl-server/target/plugins/" + name+ ".plugin.properties"));
+                    String cmd2 = String.format("mv %s %s", "./psl-server/target/classes/plugin.properties", "./psl-server/target/plugins/" + name+ ".plugin.properties");
+                    System.out.println(String.format("[%s] 复制plugin.properties: %s", name, cmd2));
+                    Process process2 = Runtime.getRuntime().exec(cmd2);
                     waitForReturn(process2);
 
                     System.out.println(String.format("[%s] 模块资源加载成功", name));
@@ -46,7 +52,9 @@ public class ResourceManager {
             while ((line = br.readLine()) != null) {
                 result.append(line);
             }
-            System.out.println(result);
+            if (StringUtils.isNotEmpty(result.toString())) {
+                System.out.println(result);
+            }
         }
     }
 }
