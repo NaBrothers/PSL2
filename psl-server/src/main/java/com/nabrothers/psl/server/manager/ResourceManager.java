@@ -23,7 +23,7 @@ public class ResourceManager {
                     String name = module.getName();
                     System.out.println(String.format("[%s] 加载模块资源", name));
 
-                    String cmd1 = String.format("cp -r %s %s", module.getAbsolutePath() + "/target/classes/", "./psl-server/target/classes/");
+                    String cmd1 = String.format("cp -r %s %s", module.getAbsolutePath() + "/target/classes/", "./psl-server/target/");
                     System.out.println(String.format("[%s] 复制classes：%s", name, cmd1));
                     Process process1 = Runtime.getRuntime().exec(cmd1);
                     waitForReturn(process1);
