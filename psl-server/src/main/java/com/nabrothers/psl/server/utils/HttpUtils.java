@@ -1,6 +1,7 @@
 package com.nabrothers.psl.server.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpEntity;
@@ -14,6 +15,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URLEncoder;
 
@@ -22,13 +24,28 @@ public class HttpUtils {
 
     private static final String url = "http://127.0.0.1:5700/";
 
+    @Nullable
     public static JSONObject doGet(String cmd, JSONObject param) {
+        JSONObject resObj = getResp(cmd, param);
+        return resObj == null ? null : resObj.getJSONObject("data");
+    }
+
+    @Nullable
+    public static JSONArray doGetArray(String cmd, JSONObject param) {
+        JSONObject resObj = getResp(cmd, param);
+        return resObj == null ? null : resObj.getJSONArray("data");
+    }
+
+    private static JSONObject getResp(String cmd, JSONObject param) {
         StringBuilder sb = new StringBuilder(url);
         sb.append(cmd + "?");
-        for (String key : param.keySet()) {
-            try {
-                sb.append(key + "=" + URLEncoder.encode(param.get(key).toString(), "UTF-8") + "&");
-            } catch (Exception ignore) {}
+        if (param != null) {
+            for (String key : param.keySet()) {
+                try {
+                    sb.append(key + "=" + URLEncoder.encode(param.get(key).toString(), "UTF-8") + "&");
+                } catch (Exception ignore) {
+                }
+            }
         }
         String res = doGet(sb.toString());
         if (res == null) {
@@ -40,9 +57,10 @@ public class HttpUtils {
             log.error("HTTP_GET_API_ERROR: " + sb.toString() + ", " + resObj.getString("wording"));
             return null;
         }
-        return resObj.getJSONObject("data");
+        return resObj;
     }
 
+    @Nullable
     public static JSONObject doPost(String cmd, JSONObject param) {
         StringBuilder sb = new StringBuilder(url);
         sb.append(cmd);
@@ -60,9 +78,7 @@ public class HttpUtils {
     }
 
 
-    /**
-     * @Description: 发送get请求
-     */
+    @Nullable
     public static String doGet(String url) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
@@ -104,9 +120,7 @@ public class HttpUtils {
         return null;
     }
 
-    /**
-     * @Description: 发送http post请求
-     */
+    @Nullable
     public static String doPost(String url, String jsonStr) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);

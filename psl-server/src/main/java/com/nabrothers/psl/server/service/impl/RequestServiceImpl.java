@@ -1,17 +1,14 @@
 package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.nabrothers.psl.server.request.GroupMessageRequest;
-import com.nabrothers.psl.server.request.HeartbeatRequest;
-import com.nabrothers.psl.server.request.MessageRequest;
-import com.nabrothers.psl.server.request.PrivateMessageRequest;
+import com.nabrothers.psl.server.manager.AccountManager;
+import com.nabrothers.psl.server.request.*;
 import com.nabrothers.psl.server.request.enums.MessageType;
 import com.nabrothers.psl.server.request.enums.PostType;
 import com.nabrothers.psl.server.service.RequestService;
-import com.nabrothers.psl.server.service.handler.*;
+import com.nabrothers.psl.server.handler.*;
 import com.nabrothers.psl.server.utils.RequestUtils;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -34,6 +31,9 @@ public class RequestServiceImpl implements RequestService {
 
     @Resource
     private HeartbeatHandler heartbeatHandler;
+
+    @Resource
+    private AccountManager accountManager;
 
     @PostConstruct
     private void init() {
@@ -76,6 +76,11 @@ public class RequestServiceImpl implements RequestService {
                 break;
             case MESSAGE_GROUP:
                 GroupMessageRequest groupMessageRequest = param.toJavaObject(GroupMessageRequest.class);
+                if (messageRequest.getMessage().startsWith(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()))) {
+                    String message = messageRequest.getMessage().replace(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()), "").trim();
+                    groupMessageRequest.setMessage(message);
+                    groupMessageRequest.setAt(true);
+                }
                 handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);
                 break;
         }

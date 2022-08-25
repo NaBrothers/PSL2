@@ -9,4 +9,9 @@ public class TestController {
     public String heartbeat() {
         return "ok";
     }
+
+    @Handler(command = "测试")
+    public String echo(String arg) {
+        return arg;
+    }
 }

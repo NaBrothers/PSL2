@@ -1,6 +1,4 @@
-package com.nabrothers.psl.server.service.handler;
-
-import com.nabrothers.psl.server.request.enums.PostType;
+package com.nabrothers.psl.server.handler;
 
 public enum EventType {
     HEARTBEAT(0), PRIVATE_MESSAGE(1), GROUP_MESSAGE(2);

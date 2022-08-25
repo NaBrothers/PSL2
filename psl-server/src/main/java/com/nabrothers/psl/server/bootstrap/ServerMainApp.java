@@ -1,15 +1,16 @@
 package com.nabrothers.psl.server.bootstrap;
 
 import com.nabrothers.psl.server.manager.PluginManager;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Component
 public class ServerMainApp implements ApplicationListener<ContextRefreshedEvent> {
 
-    @Autowired
+    @Resource
     PluginManager pluginManager;
 
     @Override

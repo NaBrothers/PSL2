@@ -74,7 +74,7 @@ public class HandlerContext {
                 String signature1 = node.handler.method.getDeclaringClass().getName() + ":" + node.handler.method.getName();
                 String signature2 = method.getDeclaringClass().getName() + ":" + method.getName();
                 if (!signature1.equals(signature2)) {
-                    throw new RuntimeException("Command conflict: " + node.command + ", " + signature1 + " & " + signature2);
+                    throw new RuntimeException("指令冲突: " + node.command + ", " + signature1 + " & " + signature2);
                 }
                 return;
             }
@@ -120,11 +120,11 @@ public class HandlerContext {
 
     private String invoke(Node node, List<String> args) {
         if (node.handler == null) {
-            throw new RuntimeException("No such method: " + node.command);
+            throw new RuntimeException(String.format("找不到指令 [%s]\n支持的指令: %s", args.get(0), head.children.keySet()));
         }
         int paramCount = node.handler.method.getParameterCount();
         if (args.size() < paramCount) {
-            throw new RuntimeException("Wrong arguments: " + node.command + ", required arguments: " + paramCount);
+            throw new RuntimeException(String.format("指令 [%s] 需要 %d 个参数", node.command, paramCount));
         }
         try {
             List<String> methodArgs = new ArrayList<>();
@@ -139,13 +139,13 @@ public class HandlerContext {
             try {
                 obj = ApplicationContextUtils.getBean(node.handler.method.getDeclaringClass());
             } catch (Exception e) {
-                log.warn("Bean not found, create new instance: " + node.handler.method.getDeclaringClass());
+                log.warn("找不到Bean，创建新实例: " + node.handler.method.getDeclaringClass());
                 obj = node.handler.method.getDeclaringClass().newInstance();
             }
             String res = (String) node.handler.method.invoke(obj, methodArgs.toArray());
             return res;
         } catch (Exception e) {
-            throw new RuntimeException("Handler invoke error: " + e.getMessage());
+            throw new RuntimeException("函数调用异常: " + e.getMessage());
         }
     }
 }

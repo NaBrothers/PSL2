@@ -1,4 +1,4 @@
-package com.nabrothers.psl.server.service.handler;
+package com.nabrothers.psl.server.handler;
 
 import com.nabrothers.psl.server.request.CQHttpRequest;
 
