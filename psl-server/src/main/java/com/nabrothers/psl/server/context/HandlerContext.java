@@ -9,6 +9,7 @@ import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -145,7 +146,7 @@ public class HandlerContext {
             String res = (String) node.handler.method.invoke(obj, methodArgs.toArray());
             return res;
         } catch (Exception e) {
-            throw new RuntimeException("函数调用异常: " + e.getMessage());
+            throw new RuntimeException("函数调用异常: " + ((InvocationTargetException) e).getTargetException().getMessage());
         }
     }
 }
