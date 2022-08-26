@@ -146,7 +146,29 @@ public class HandlerContext {
             String res = (String) node.handler.method.invoke(obj, methodArgs.toArray());
             return res;
         } catch (Exception e) {
-            throw new RuntimeException("函数调用异常: " + ((InvocationTargetException) e).getTargetException().getMessage());
+            Throwable invocationTargetException = ((InvocationTargetException) e).getTargetException();
+            throw new RuntimeException("函数调用异常:\n" +
+                    invocationTargetException.getMessage() + "\n" +
+                    "[异常堆栈]\n" +
+                    getStackTrace(invocationTargetException));
         }
+    }
+
+    private String getStackTrace(Throwable e) {
+        StackTraceElement[] stackElements = e.getStackTrace();
+        StringBuilder sb = new StringBuilder();
+        if (null != stackElements) {
+            for (int i = 0; i < stackElements.length; i++) {
+                if (i > 10) {
+                    sb.append(String.format("......"));
+                    break;
+                }
+                sb.append(stackElements[i].getClassName());
+                sb.append(".").append(stackElements[i].getMethodName());
+                sb.append("(").append(stackElements[i].getFileName()).append(":");
+                sb.append(stackElements[i].getLineNumber()+")").append("\n");
+            }
+        }
+        return sb.toString();
     }
 }
