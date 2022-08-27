@@ -26,7 +26,7 @@ public class HandlerContextTest {
 
     @Test
     public void test0() {
-        Assert.assertThrows(RuntimeException.class, () -> context.handle("测试"));
+        Assert.assertEquals("this is a test", context.handle("测试"));
     }
 
     @Test
@@ -49,6 +49,11 @@ public class HandlerContextTest {
         Assert.assertEquals(context.handle("测试 测试3 PSL PSL PSL"), "1_PSL 2_PSL 3_PSL");
         Assert.assertEquals(context.handle("测试 测试3 PSL PSL PSL PSL"), "1_PSL 2_PSL 3_PSL PSL");
         Assert.assertThrows(RuntimeException.class, () -> context.handle("测试 测试3 PSL PSL"));
+    }
+
+    @Handler()
+    public String handler0() {
+        return "this is a test";
     }
 
     @Handler(command = "测试1", info = "测试无参数")

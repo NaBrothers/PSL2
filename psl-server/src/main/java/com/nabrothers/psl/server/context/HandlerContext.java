@@ -1,6 +1,7 @@
 package com.nabrothers.psl.server.context;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
+import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.server.utils.ApplicationContextUtils;
 import com.nabrothers.psl.server.utils.CommonUtils;
 import lombok.extern.log4j.Log4j2;
@@ -17,17 +18,50 @@ import java.util.*;
 public class HandlerContext {
     private static HandlerContext instance = new HandlerContext();
 
-    private class Node {
+    public class Node {
         private Node parent;
         private Map<String, Node> children = new HashMap<>();
         private HandlerMethod handler;
         private String command;
+
+        public Node getParent() {
+            return parent;
+        }
+
+        public Map<String, Node> getChildren() {
+            return children;
+        }
+
+        public HandlerMethod getHandler() {
+            return handler;
+        }
+
+        public String getCommand() {
+            return command;
+        }
     }
 
-    private class HandlerMethod {
+    public class HandlerMethod {
         private Method method;
         private String info;
         private String command;
+        private boolean hidden;
+
+        public Method getMethod() {
+            return method;
+        }
+
+        public String getInfo() {
+            return info;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public boolean isHidden() {
+            return hidden;
+        }
     }
 
     private Node head = new Node();
@@ -84,6 +118,7 @@ public class HandlerContext {
             node.handler.method = method;
             node.handler.command = annotation.command();
             node.handler.info = annotation.info();
+            node.handler.hidden = method.isAnnotationPresent(Hidden.class) || method.getDeclaringClass().isAnnotationPresent(Hidden.class);
             return;
         }
 
@@ -121,11 +156,11 @@ public class HandlerContext {
 
     private String invoke(Node node, List<String> args) {
         if (node.handler == null) {
-            throw new RuntimeException(String.format("找不到指令 [%s]\n支持的指令: %s", args.get(0), head.children.keySet()));
+            throw new RuntimeException(String.format("找不到指令 [%s]\n请输入 [帮助] 查看支持的指令", args.get(0)));
         }
         int paramCount = node.handler.method.getParameterCount();
         if (args.size() < paramCount) {
-            throw new RuntimeException(String.format("指令 [%s] 需要 %d 个参数", node.command, paramCount));
+            throw new RuntimeException(String.format("指令 [%s] 需要 %d 个参数\n请输入 [帮助 %s] 查看指令格式", node.command, paramCount, node.command));
         }
         try {
             List<String> methodArgs = new ArrayList<>();
@@ -170,5 +205,9 @@ public class HandlerContext {
             }
         }
         return sb.toString();
+    }
+
+    public Node getHead() {
+        return head;
     }
 }
