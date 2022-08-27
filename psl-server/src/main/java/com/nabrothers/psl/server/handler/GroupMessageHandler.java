@@ -46,7 +46,7 @@ public class GroupMessageHandler extends MessageHandler{
                 message = e.getMessage();
             } finally {
                 if (StringUtils.isNotEmpty(message)) {
-                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + message);
+                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + message);
                 }
             }
         }
