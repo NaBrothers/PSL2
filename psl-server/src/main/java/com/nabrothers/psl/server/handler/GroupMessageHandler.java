@@ -39,6 +39,7 @@ public class GroupMessageHandler extends MessageHandler{
             String result = "";
             try {
                 result = context.handle(messageRequest.getMessage());
+                result = StringUtils.stripEnd(result, "\n");
             } catch (Exception e) {
                 log.error(e);
                 result = e.getMessage();

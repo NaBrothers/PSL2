@@ -32,14 +32,12 @@ public class HandlerContextTest {
     @Test
     public void test1() {
         Assert.assertEquals(context.handle("测试 测试1"), "123");
-        Assert.assertEquals(context.handle("测试 测试1 PSL"), "123");
         Assert.assertEquals(context.handle("测试 测试1 测试"), "456");
     }
 
     @Test
     public void test2() {
         Assert.assertEquals(context.handle("测试 测试2 PSL"), "PSL");
-        Assert.assertEquals(context.handle("测试 测试2 PSL PSL"), "PSL PSL");
         Assert.assertEquals(context.handle("测试 测试2 测试"), "123");
         Assert.assertThrows(RuntimeException.class, () -> context.handle("测试 测试2"));
     }
@@ -47,7 +45,7 @@ public class HandlerContextTest {
     @Test
     public void test3() {
         Assert.assertEquals(context.handle("测试 测试3 PSL PSL PSL"), "1_PSL 2_PSL 3_PSL");
-        Assert.assertEquals(context.handle("测试 测试3 PSL PSL PSL PSL"), "1_PSL 2_PSL 3_PSL PSL");
+        Assert.assertEquals(context.handle("测试 测试3 PSL PSL PSL PSL"), "1_PSL 2_PSL 3_PSL 4_PSL");
         Assert.assertThrows(RuntimeException.class, () -> context.handle("测试 测试3 PSL PSL"));
     }
 
@@ -77,7 +75,12 @@ public class HandlerContextTest {
     }
 
     @Handler(command = "测试3", info = "测试多个参数")
-    public String handler3(String param1, String param2, String param3) {
+    public String handler3_1(String param1, String param2, String param3) {
         return String.format("1_%s 2_%s 3_%s", param1, param2, param3);
+    }
+
+    @Handler(command = "测试3", info = "测试多个参数")
+    public String handler3_2(String param1, String param2, String param3, String param4) {
+        return String.format("1_%s 2_%s 3_%s 4_%s", param1, param2, param3, param4);
     }
 }

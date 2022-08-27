@@ -1,5 +1,6 @@
 package com.nabrothers.psl.server.context;
 
+import com.google.common.base.Joiner;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.server.utils.ApplicationContextUtils;
@@ -10,9 +11,11 @@ import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Log4j2
 public class HandlerContext {
@@ -21,7 +24,7 @@ public class HandlerContext {
     public class Node {
         private Node parent;
         private Map<String, Node> children = new HashMap<>();
-        private HandlerMethod handler;
+        private Map<Integer, HandlerMethod> handlers = new HashMap<>();
         private String command;
 
         public Node getParent() {
@@ -32,8 +35,40 @@ public class HandlerContext {
             return children;
         }
 
-        public HandlerMethod getHandler() {
-            return handler;
+        public List<HandlerMethod> getHandlers() {
+            return new ArrayList<>(handlers.values());
+        }
+
+        @Nullable
+        public Node getChild(String cmd) {
+            return children.get(cmd);
+        }
+
+        @Nullable
+        public HandlerMethod getHandler(int paramCount) {
+            return handlers.get(paramCount);
+        }
+
+        @Nullable
+        public HandlerMethod getDefaultHandler() {
+            HandlerMethod handlerMethod = handlers.get(0);
+            if (handlerMethod == null) {
+                handlerMethod = handlers.values().iterator().next();
+            }
+            return handlerMethod;
+        }
+
+        public List<Node> getAllChildren() {
+            List<Node> nodes = new ArrayList<>();
+            for (Node child : children.values()) {
+                nodes.add(child);
+                nodes.addAll(child.getAllChildren());
+            }
+            return nodes;
+        }
+
+        public List<Node> getAllMethodChildren() {
+            return getAllChildren().stream().filter(node -> !node.handlers.isEmpty()).collect(Collectors.toList());
         }
 
         public String getCommand() {
@@ -105,20 +140,20 @@ public class HandlerContext {
 
     private void _parse(Node node, List<String> commands, Method method) {
         if (commands.isEmpty()) {
-            if (node.handler != null) {
-                String signature1 = node.handler.method.getDeclaringClass().getName() + ":" + node.handler.method.getName();
+            if (node.handlers.get(method.getParameterCount()) != null) {
+                Method exist = node.handlers.get(method.getParameterCount()).getMethod();
+                String signature1 = exist.getDeclaringClass().getName() + ":" + exist.getName();
                 String signature2 = method.getDeclaringClass().getName() + ":" + method.getName();
-                if (!signature1.equals(signature2)) {
-                    throw new RuntimeException("指令冲突: " + node.command + ", " + signature1 + " & " + signature2);
-                }
-                return;
+                throw new RuntimeException("指令冲突: " + node.command + ", " + signature1 + " & " + signature2);
             }
-            node.handler = new HandlerMethod();
+            HandlerMethod handlerMethod = new HandlerMethod();
+            node.handlers.put(method.getParameterCount(), handlerMethod);
             Handler annotation = method.getDeclaredAnnotation(Handler.class);
-            node.handler.method = method;
-            node.handler.command = annotation.command();
-            node.handler.info = annotation.info();
-            node.handler.hidden = method.isAnnotationPresent(Hidden.class) || method.getDeclaringClass().isAnnotationPresent(Hidden.class);
+            handlerMethod.method = method;
+            handlerMethod.command = annotation.command();
+            handlerMethod.info = annotation.info();
+            handlerMethod.hidden = method.isAnnotationPresent(Hidden.class) || method.getDeclaringClass().isAnnotationPresent(Hidden.class);
+
             return;
         }
 
@@ -155,37 +190,34 @@ public class HandlerContext {
     }
 
     private String invoke(Node node, List<String> args) {
-        if (node.handler == null) {
+        if (node.handlers.isEmpty()) {
             throw new RuntimeException(String.format("找不到指令 [%s]\n请输入 [帮助] 查看支持的指令", args.get(0)));
         }
-        int paramCount = node.handler.method.getParameterCount();
-        if (args.size() < paramCount) {
-            throw new RuntimeException(String.format("指令 [%s] 需要 %d 个参数\n请输入 [帮助 %s] 查看指令格式", node.command, paramCount, node.command));
+        HandlerMethod handlerMethod = node.handlers.get(args.size());
+        if (handlerMethod == null) {
+            throw new RuntimeException(String.format("指令 [%s] 需要 (%s) 个参数\n请输入 [帮助 %s] 查看指令格式",
+                    node.command,
+                    Joiner.on("/").join(node.handlers.keySet()),
+                    node.command.split(" ")[0]));
         }
         try {
-            List<String> methodArgs = new ArrayList<>();
-            for (int i = 0; i < paramCount; i++) {
-                if (i == paramCount - 1) {
-                    methodArgs.add(String.join(" ", CommonUtils.subList(args, i, args.size())));
-                } else {
-                    methodArgs.add(args.get(i));
-                }
-            }
             Object obj;
             try {
-                obj = ApplicationContextUtils.getBean(node.handler.method.getDeclaringClass());
+                obj = ApplicationContextUtils.getBean(handlerMethod.method.getDeclaringClass());
             } catch (Exception e) {
-                log.warn("找不到Bean，创建新实例: " + node.handler.method.getDeclaringClass());
-                obj = node.handler.method.getDeclaringClass().newInstance();
+                log.warn("找不到Bean，创建新实例: " + handlerMethod.method.getDeclaringClass());
+                obj = handlerMethod.method.getDeclaringClass().newInstance();
             }
-            String res = (String) node.handler.method.invoke(obj, methodArgs.toArray());
+            String res = (String) handlerMethod.method.invoke(obj, args.toArray());
             return res;
-        } catch (Exception e) {
-            Throwable invocationTargetException = ((InvocationTargetException) e).getTargetException();
+        } catch (InvocationTargetException e) {
+            Throwable invocationTargetException = e.getTargetException();
             throw new RuntimeException("函数调用异常:\n" +
                     invocationTargetException.getMessage() + "\n" +
                     "[异常堆栈]\n" +
                     getStackTrace(invocationTargetException));
+        } catch (Exception e) {
+            throw new RuntimeException("其他异常：\n" + e.getMessage());
         }
     }
 
