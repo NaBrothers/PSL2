@@ -1,6 +1,7 @@
 package com.nabrothers.psl.server.controller;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
+import com.nabrothers.psl.sdk.response.HandlerResponse;
 import com.nabrothers.psl.server.context.HandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
@@ -15,29 +16,35 @@ public class HelpController {
     private HandlerContext context = HandlerContext.getInstance();
 
     @Handler(info = "查看支持的指令")
-    public String help() {
+    public HandlerResponse help() {
+        HandlerResponse response = new HandlerResponse();
+        response.setTitle("帮助菜单");
         Map<String, HandlerContext.Node> commands = context.getHead().getChildren();
-        StringBuilder sb = new StringBuilder("支持的指令:");
+        StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, HandlerContext.Node> command : commands.entrySet()) {
             HandlerContext.HandlerMethod handlerMethod = command.getValue().getDefaultHandler();
             assert handlerMethod != null;
             if (handlerMethod.isHidden()) {
                 continue;
             }
-            sb.append("\n");
             sb.append(String.format("[%s] %s",
                     command.getKey(),
                     StringUtils.isEmpty(handlerMethod.getInfo()) ? "暂无说明" : handlerMethod.getInfo())
             );
+            sb.append("\n");
         }
-        return sb.toString();
+        response.setMessage(sb.toString());
+        return response;
     }
 
     @Handler(info = "查看指令详情")
-    public String help(String cmd) {
+    public HandlerResponse help(String cmd) {
+       HandlerResponse response = new HandlerResponse();
+       response.setTitle("指令详情");
        HandlerContext.Node node = context.getHead().getChild(cmd);
        if (node == null) {
-           return String.format("找不到指令 [%s]", cmd);
+           response.setMessage(String.format("找不到指令 [%s]", cmd));
+           return response;
        }
        List<HandlerContext.Node> children = node.getAllMethodChildren();
        if (!node.getHandlers().isEmpty()) {
@@ -67,22 +74,7 @@ public class HelpController {
                sb.append("\n");
            }
        }
-       return sb.toString();
-    }
-
-
-    @Handler(command = "2")
-    public String help2() {
-        return "2";
-    }
-
-    @Handler(command = "1 2")
-    public String help3(int a) {
-        return "1 2";
-    }
-
-    @Handler(command = "1 1")
-    public String help1(String a, int b) {
-        return "1 1";
+       response.setMessage(sb.toString());
+       return response;
     }
 }

@@ -171,12 +171,12 @@ public class HandlerContext {
         _parse(child, CommonUtils.subList(commands, 1, commands.size()), method);
     }
 
-    public String handle(String command) {
+    public Object handle(String command) {
         List<String> commands = Arrays.asList(command.split(" "));
         return _handle(head, commands);
     }
 
-    private String _handle(Node node, List<String> commands) {
+    private Object _handle(Node node, List<String> commands) {
         if (commands.isEmpty()) {
             return invoke(node, commands);
         }
@@ -189,7 +189,7 @@ public class HandlerContext {
         }
     }
 
-    private String invoke(Node node, List<String> args) {
+    private Object invoke(Node node, List<String> args) {
         if (node.handlers.isEmpty()) {
             throw new RuntimeException(String.format("找不到指令 [%s]\n请输入 [帮助] 查看支持的指令", args.get(0)));
         }
@@ -208,8 +208,7 @@ public class HandlerContext {
                 log.warn("找不到Bean，创建新实例: " + handlerMethod.method.getDeclaringClass());
                 obj = handlerMethod.method.getDeclaringClass().newInstance();
             }
-            String res = (String) handlerMethod.method.invoke(obj, args.toArray());
-            return res;
+            return handlerMethod.method.invoke(obj, args.toArray());
         } catch (InvocationTargetException e) {
             Throwable invocationTargetException = e.getTargetException();
             throw new RuntimeException("函数调用异常:\n" +

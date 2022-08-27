@@ -36,16 +36,17 @@ public class GroupMessageHandler extends MessageHandler{
                 messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
 
         if (messageRequest.isAt()) {
-            String result = "";
+            String message = "";
             try {
-                result = context.handle(messageRequest.getMessage());
-                result = StringUtils.stripEnd(result, "\n");
+                Object result = context.handle(messageRequest.getMessage());
+                message = result.toString();
+                message = StringUtils.stripEnd(message, "\n");
             } catch (Exception e) {
                 log.error(e);
-                result = e.getMessage();
+                message = e.getMessage();
             } finally {
-                if (StringUtils.isNotEmpty(result)) {
-                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + result);
+                if (StringUtils.isNotEmpty(message)) {
+                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + message);
                 }
             }
         }

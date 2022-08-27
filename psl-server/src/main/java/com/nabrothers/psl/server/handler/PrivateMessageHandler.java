@@ -1,5 +1,6 @@
 package com.nabrothers.psl.server.handler;
 
+import com.nabrothers.psl.sdk.response.HandlerResponse;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.PrivateMessageRequest;
@@ -24,16 +25,17 @@ public class PrivateMessageHandler extends MessageHandler{
     public void doHandle(CQHttpRequest request) {
         PrivateMessageRequest messageRequest = (PrivateMessageRequest) request;
         log.info(String.format(LOG_SYNTAX, messageRequest.getSender().getNickname(), messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
-        String result = "";
+        String message = "";
         try {
-            result = context.handle(messageRequest.getMessage());
-            result = StringUtils.stripEnd(result, "\n");
+            Object result = context.handle(messageRequest.getMessage());
+            message = result.toString();
+            message = StringUtils.stripEnd(message, "\n");
         } catch (Exception e) {
             log.error(e);
-            result = e.getMessage();
+            message = e.getMessage();
         } finally {
-            if (StringUtils.isNotEmpty(result)) {
-                Long msgId = messageService.sendPrivateMessage(messageRequest.getUser_id(), result);
+            if (StringUtils.isNotEmpty(message)) {
+                Long msgId = messageService.sendPrivateMessage(messageRequest.getUser_id(), message);
             }
         }
     }
