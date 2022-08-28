@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,14 +26,6 @@ import javax.imageio.ImageIO;
 @Log4j2
 @Component
 public class ImageUtils {
-
-    /**
-     * 图片宽度
-     */
-    private static int width = 400;
-    /**
-     * 每一行的高度
-     */
     private static int line_height = 18;
     /**
      * 字体
@@ -45,11 +38,20 @@ public class ImageUtils {
 
     private static final int FONT_SIZE = 14;
 
+    private static final int LINE_CHAR_COUNT = 30*2; //每行最大字符数
+
     @PostConstruct
     public void init() {
         Path path = Paths.get(DEFAULT_PATH);
         try {
-            Files.createDirectories(path);
+            if (!path.toFile().exists()) {
+                Files.createDirectories(path);
+            } else {
+                File files[] = path.toFile().listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    files[i].delete();
+                }
+            }
         } catch (IOException e) {
             log.error(e);
         }
@@ -76,6 +78,10 @@ public class ImageUtils {
         }
     }
 
+    private static boolean isChinese(char ch) {
+        return String.valueOf(ch).getBytes(StandardCharsets.UTF_8).length == 3;
+    }
+
     public static String toImage(String message) {
         String fileName = String.format("%s.jpg",  message.hashCode());
         File file = new File(DEFAULT_PATH + fileName);
@@ -85,22 +91,50 @@ public class ImageUtils {
 
         String[] strArr = message.split("\n");
         FontMetrics fm = FontDesignMetrics.getMetrics(font);
-        int stringWidth = fm.charWidth('字');// 标点符号也算一个字
-        //计算每行多少字 = 宽/每个字占用的宽度
-        int line_string_num = width % stringWidth == 0 ? (width / stringWidth) : (width / stringWidth) + 1;
+        int stringWidth = fm.charWidth('a');// 标点符号也算一个字
 
-        //System.out.println("每行字数=" + line_string_num);
+        // 自适应画布
+        int maxCount = -1;
+        for (String str : strArr) {
+            int strCount = 0;
+            for (char ch : str.toCharArray()) {
+                if (isChinese(ch)) {
+                    strCount += 2;
+                } else {
+                    strCount += 1;
+                }
+            }
+            if (strCount  > maxCount) {
+                maxCount = strCount;
+            }
+        }
+
+        int maxLineCount = Math.min(maxCount, LINE_CHAR_COUNT);
+        int width = maxLineCount * stringWidth;
+
         //将数组转为list
         List<String> strList = new ArrayList<>(Arrays.asList(strArr));
 
-        //按照每行多少个字进行分割
+        //按照每行多少个字符进行分割
         for (int j = 0; j < strList.size(); j++) {
-            //当字数超过限制，就进行分割
-            if (strList.get(j).length() > line_string_num) {
-                //将多的那一端放入本行下一行，等待下一个循环处理
-                strList.add(j + 1, strList.get(j).substring(line_string_num));
-                //更新本行的内容
-                strList.set(j, strList.get(j).substring(0, line_string_num));
+            String str = strList.get(j);
+            int strCount = 0;
+            int index = 0;
+            for (char ch : str.toCharArray()) {
+                if (isChinese(ch)) {
+                    strCount += 2;
+                } else {
+                    strCount += 1;
+                }
+                //当字符数超过限制，就进行分割
+                if (strCount > maxLineCount) {
+                    //将多的那一端放入本行下一行，等待下一个循环处理
+                    strList.add(j + 1, str.substring(index));
+                    //更新本行的内容
+                    strList.set(j, str.substring(0, index));
+                    break;
+                }
+                index++;
             }
         }
 
@@ -113,13 +147,13 @@ public class ImageUtils {
 
         for (int m = 0; m < 1; m++) {
             File outFile = new File(DEFAULT_PATH + fileName);
-            // 创建图片  宽度多预留一点
-            BufferedImage image = new BufferedImage(width + 20, image_height,
+            // 创建图片，宽度多预留一点
+            BufferedImage image = new BufferedImage(width + FONT_SIZE, image_height,
                     BufferedImage.TYPE_INT_BGR);
             Graphics g = image.getGraphics();
-            g.setClip(0, 0, width + 20, image_height);
+            g.setClip(0, 0, width + FONT_SIZE, image_height);
             g.setColor(Color.white); // 背景色白色
-            g.fillRect(0, 0, width + 20, image_height);
+            g.fillRect(0, 0, width + FONT_SIZE, image_height);
 
             g.setColor(Color.black);//  字体颜色黑色
             g.setFont(font);// 设置画笔字体
@@ -129,7 +163,7 @@ public class ImageUtils {
                 int index = i + m * every_line;
                 if (strList.size() - 1 >= index) {
 //                    System.out.println("每行实际=" + newList.get(index).length());
-                    g.drawString(strList.get(index), 0, line_height * (i + 1));
+                    g.drawString(strList.get(index), FONT_SIZE / 2, line_height * (i + 1));
                 }
             }
             g.dispose();
