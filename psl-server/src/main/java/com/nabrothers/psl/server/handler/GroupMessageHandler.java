@@ -1,20 +1,19 @@
 package com.nabrothers.psl.server.handler;
 
+import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.dto.GroupDTO;
-import com.nabrothers.psl.server.dto.UserDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
 import com.nabrothers.psl.server.request.CQCode;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
-import com.nabrothers.psl.server.service.GroupService;
 import com.nabrothers.psl.server.service.MessageService;
+import com.nabrothers.psl.server.utils.ImageUtils;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.*;
 
 @Component
 @Log4j2
@@ -46,6 +45,10 @@ public class GroupMessageHandler extends MessageHandler{
                 message = e.getMessage();
             } finally {
                 if (StringUtils.isNotEmpty(message)) {
+                    if (GlobalConfig.ENABLE_IMAGE_MODE) {
+                        String path = ImageUtils.toImage(message);
+                        message = String.format(CQCode.IMAGE_PATTERN, path);
+                    }
                     Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + message);
                 }
             }
