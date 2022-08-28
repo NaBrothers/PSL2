@@ -1,6 +1,9 @@
 package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.nabrothers.psl.server.context.Session;
+import com.nabrothers.psl.server.context.SessionContext;
+import com.nabrothers.psl.server.dto.UserDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
 import com.nabrothers.psl.server.request.*;
 import com.nabrothers.psl.server.request.enums.MessageType;
@@ -69,6 +72,8 @@ public class RequestServiceImpl implements RequestService {
     private void handleMessage(JSONObject param) {
         MessageRequest messageRequest = param.toJavaObject(MessageRequest.class);
         MessageType messageType = MessageType.getByName(messageRequest.getMessage_type());
+        Session session = generateSession(messageRequest);
+        SessionContext.add(session);
         switch (messageType) {
             case MESSAGE_PRIVATE:
                 PrivateMessageRequest privateMessageRequest = param.toJavaObject(PrivateMessageRequest.class);
@@ -80,10 +85,13 @@ public class RequestServiceImpl implements RequestService {
                     String message = messageRequest.getMessage().replace(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()), "").trim();
                     groupMessageRequest.setMessage(message);
                     groupMessageRequest.setAt(true);
+                    SessionContext.get().setMessage(message);
+                    SessionContext.get().setGroup(accountManager.getGroup(groupMessageRequest.getGroup_id()));
                 }
                 handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);
                 break;
         }
+        SessionContext.clear();
     }
 
     private void handleMetaEvent(JSONObject param) {
@@ -93,5 +101,17 @@ public class RequestServiceImpl implements RequestService {
 
     private void handleOthers(JSONObject param) {
 
+    }
+
+    private Session generateSession(MessageRequest request) {
+        Session session = new Session();
+        UserDTO sender = new UserDTO();
+        sender.setId(request.getSender().getUser_id());
+        sender.setNickname(request.getSender().getNickname());
+        session.setSender(sender);
+        session.setMessage(request.getMessage());
+        session.setSelf(accountManager.getCurrentUser());
+        session.setMessageType(MessageType.getByName(request.getMessage_type()));
+        return session;
     }
 }
