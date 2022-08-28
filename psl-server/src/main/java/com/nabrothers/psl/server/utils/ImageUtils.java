@@ -7,6 +7,7 @@ import sun.font.FontDesignMetrics;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,13 +33,17 @@ public class ImageUtils {
     /**
      * 每一行的高度
      */
-    private static int line_height = 20;
+    private static int line_height = 18;
     /**
      * 字体
      */
-    private static Font font = new Font(null, Font.PLAIN, 14);
+    private static Font font;
 
     private static final String DEFAULT_PATH = "./go-cqhttp/data/images/text2image/";
+
+    private static final String FONT_PATH = "./assets/sarasa.ttf";
+
+    private static final int FONT_SIZE = 14;
 
     @PostConstruct
     public void init() {
@@ -50,8 +55,25 @@ public class ImageUtils {
         }
 
         log.info("加载图片解析器");
+        font = loadFont();
         toImage(String.valueOf(System.currentTimeMillis()));
         log.info("图片解析器加载完毕");
+    }
+
+    private static Font loadFont() {
+        try {
+            File file = new File(FONT_PATH);
+            FileInputStream aixing = new FileInputStream(file);
+            Font dynamicFont = Font.createFont(Font.TRUETYPE_FONT, aixing);
+            Font dynamicFontPt = dynamicFont.deriveFont(Font.PLAIN, FONT_SIZE);
+            aixing.close();
+            return dynamicFontPt;
+        } catch(Exception e) {
+            log.error(e);
+            log.warn("加载自定义字体失败，使用默认字体");
+            return new Font("宋体", Font.PLAIN, FONT_SIZE);
+
+        }
     }
 
     public static String toImage(String message) {
