@@ -1,11 +1,14 @@
 package com.nabrothers.psl.server.controller;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
+import com.nabrothers.psl.sdk.annotation.Param;
 import com.nabrothers.psl.sdk.response.HandlerResponse;
 import com.nabrothers.psl.server.context.HandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Parameter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,7 @@ public class HelpController {
     }
 
     @Handler(info = "查看指令详情")
-    public HandlerResponse help(String cmd) {
+    public HandlerResponse help(@Param("指令名") String cmd) {
        HandlerResponse response = new HandlerResponse();
        response.setTitle("指令详情");
        HandlerContext.Node node = context.getHead().getChild(cmd);
@@ -66,8 +69,14 @@ public class HelpController {
            for (HandlerContext.HandlerMethod method : child.getHandlers()) {
                sb.append(String.format("[%s] ", child.getCommand()));
                int i = 1;
-               for (Class param : method.getMethod().getParameterTypes()) {
-                   sb.append(String.format("(参数%d) ", i++));
+               for (Parameter param : method.getMethod().getParameters()) {
+                   Param annotation = param.getAnnotation(Param.class);
+                   if (annotation == null) {
+                       sb.append(String.format("(参数%d) ", i));
+                   } else {
+                       sb.append(String.format("(%s) ", annotation.value()));
+                   }
+                   i++;
                }
                sb.append("\n→");
                sb.append(StringUtils.isEmpty(method.getInfo()) ? "暂无说明" : method.getInfo());
