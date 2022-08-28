@@ -78,7 +78,7 @@ public class HelpController {
                    }
                    i++;
                }
-               sb.append("\n→");
+               sb.append("\n  →");
                sb.append(StringUtils.isEmpty(method.getInfo()) ? "暂无说明" : method.getInfo());
                sb.append("\n");
            }
