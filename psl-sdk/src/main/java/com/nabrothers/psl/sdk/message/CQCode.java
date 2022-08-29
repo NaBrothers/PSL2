@@ -5,4 +5,5 @@ public class CQCode {
     public static final String IMAGE_PATTERN = "[CQ:image,file=%s]";
     public static final String VIDEO_PATTERN = "[CQ:video,file=%s]";
     public static final String AUDIO_PATTERN = "[CQ:tts,text=%s]";
+    public static final String FACE_PATTERN = "[CQ:face,id=%d]";
 }

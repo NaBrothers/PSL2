@@ -5,6 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class SimpleMessage extends Message {
+    public SimpleMessage() {
+
+    }
+
     public SimpleMessage(String data) {
         this.data = data;
     }

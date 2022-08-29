@@ -51,7 +51,7 @@ public class GroupMessageHandler extends MessageHandler{
                 message = new SimpleMessage(e.getMessage());
             } finally {
                 String response = "";
-                if (GlobalConfig.ENABLE_IMAGE_MODE) {
+                if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
                     if (message instanceof CQCodeMessage) {
                         response = message.getMessage();
                     } else {

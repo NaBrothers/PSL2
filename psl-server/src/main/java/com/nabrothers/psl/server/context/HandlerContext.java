@@ -3,6 +3,9 @@ package com.nabrothers.psl.server.context;
 import com.google.common.base.Joiner;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
+import com.nabrothers.psl.server.config.GlobalConfig;
+import com.nabrothers.psl.server.service.DefaultReplyService;
+import com.nabrothers.psl.server.service.impl.DefaultReplyServiceImpl;
 import com.nabrothers.psl.server.utils.ApplicationContextUtils;
 import com.nabrothers.psl.server.utils.CommonUtils;
 import lombok.extern.log4j.Log4j2;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 @Log4j2
 public class HandlerContext {
     private static HandlerContext instance = new HandlerContext();
+
+    private static ThreadLocal<String> cmd = new ThreadLocal<>();
 
     public class Node {
         private Node parent;
@@ -172,8 +177,11 @@ public class HandlerContext {
     }
 
     public Object handle(String command) {
+        cmd.set(command);
         List<String> commands = Arrays.asList(command.split(" "));
-        return _handle(head, commands);
+        Object result = _handle(head, commands);
+        cmd.remove();
+        return result;
     }
 
     private Object _handle(Node node, List<String> commands) {
@@ -191,7 +199,12 @@ public class HandlerContext {
 
     private Object invoke(Node node, List<String> args) {
         if (node.handlers.isEmpty()) {
-            throw new RuntimeException(String.format("找不到指令 [%s]\n请输入 [帮助] 查看支持的指令", args.get(0)));
+            if (GlobalConfig.ENABLE_DEFAULT_REPLY) {
+                DefaultReplyService defaultReplyService = ApplicationContextUtils.getBean(DefaultReplyServiceImpl.class);
+                return defaultReplyService.getReply(cmd.get());
+            } else {
+                throw new RuntimeException(String.format("找不到指令 [%s]\n请输入 [帮助] 查看支持的指令", args.get(0)));
+            }
         }
         HandlerMethod handlerMethod = node.handlers.get(args.size());
         if (handlerMethod == null) {
