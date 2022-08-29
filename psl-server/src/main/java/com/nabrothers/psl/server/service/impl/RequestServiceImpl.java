@@ -13,6 +13,7 @@ import com.nabrothers.psl.server.service.RequestService;
 import com.nabrothers.psl.server.handler.*;
 import com.nabrothers.psl.server.utils.RequestUtils;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -78,10 +79,12 @@ public class RequestServiceImpl implements RequestService {
         switch (messageType) {
             case MESSAGE_PRIVATE:
                 PrivateMessageRequest privateMessageRequest = param.toJavaObject(PrivateMessageRequest.class);
+                privateMessageRequest.setMessage(decode(privateMessageRequest.getMessage()));
                 handlers.get(EventType.PRIVATE_MESSAGE).doHandle(privateMessageRequest);
                 break;
             case MESSAGE_GROUP:
                 GroupMessageRequest groupMessageRequest = param.toJavaObject(GroupMessageRequest.class);
+                groupMessageRequest.setMessage(decode(groupMessageRequest.getMessage()));
                 if (messageRequest.getMessage().startsWith(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()))) {
                     String message = messageRequest.getMessage().replace(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()), "").trim();
                     groupMessageRequest.setMessage(message);
@@ -114,5 +117,9 @@ public class RequestServiceImpl implements RequestService {
         session.setSelf(accountManager.getCurrentUser());
         session.setMessageType(MessageType.getByName(request.getMessage_type()));
         return session;
+    }
+
+    public static String decode(String input) {
+        return StringEscapeUtils.unescapeHtml(input);
     }
 }
