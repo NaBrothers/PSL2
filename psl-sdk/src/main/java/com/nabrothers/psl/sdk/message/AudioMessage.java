@@ -6,6 +6,10 @@ import lombok.Data;
 public class AudioMessage extends Message implements CQCodeMessage {
     private String text = "";
 
+    {
+        this.setSupportAt(false);
+    }
+
     @Override
     public String getMessage() {
         return String.format(CQCode.AUDIO_PATTERN, text);

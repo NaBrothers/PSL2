@@ -1,11 +1,8 @@
 package com.nabrothers.psl.server.handler;
 
-import com.nabrothers.psl.sdk.message.CQCodeMessage;
-import com.nabrothers.psl.sdk.message.Message;
-import com.nabrothers.psl.sdk.message.SimpleMessage;
+import com.nabrothers.psl.sdk.message.*;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
-import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.PrivateMessageRequest;
 import com.nabrothers.psl.server.service.MessageService;
@@ -40,7 +37,7 @@ public class PrivateMessageHandler extends MessageHandler{
             }
         } catch (Exception e) {
             log.error(e);
-            message = new SimpleMessage(e.getMessage());
+            message = new TextMessage(e.getMessage());
         } finally {
             String response = "";
             if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {

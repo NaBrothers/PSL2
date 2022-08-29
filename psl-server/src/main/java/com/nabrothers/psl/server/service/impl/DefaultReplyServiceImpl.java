@@ -8,6 +8,8 @@ import com.nabrothers.psl.server.service.DefaultReplyService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import org.springframework.stereotype.Component;
 
+import java.net.URLEncoder;
+
 @Component
 public class DefaultReplyServiceImpl implements DefaultReplyService {
 
@@ -15,25 +17,31 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
     public Message getReply(String message) {
         SimpleMessage reply = new SimpleMessage();
         reply.setSupportImageMode(false);
-
-        String retStr = HttpUtils.doGet("https://api.qingyunke.com/api.php?key=free&msg=" + message);
-        String content = JSONObject.parseObject(retStr).getString("content");
-        content.replaceAll("\\{br\\}", "\n");
-        int index = -1;
-        do {
-            index = content.indexOf("{face:");
-            if (index > -1) {
-                int i = index + 6;
-                for (; i < content.length(); i++) {
-                    if (content.charAt(i) == '}') {
-                        break;
+        try {
+            String retStr = HttpUtils.doGet("https://api.qingyunke.com/api.php?key=free&msg=" + URLEncoder.encode(message, "UTF-8"));
+            String content = JSONObject.parseObject(retStr).getString("content");
+            content = content.replaceAll("\\{br\\}", "\n");
+            int index = -1;
+            do {
+                index = content.indexOf("{face:");
+                if (index > -1) {
+                    int i = index + 6;
+                    for (; i < content.length(); i++) {
+                        if (content.charAt(i) == '}') {
+                            break;
+                        }
                     }
+                    int faceId = Integer.parseInt(content.substring(index + 6, i));
+                    content = content.substring(0, index) + String.format(CQCode.FACE_PATTERN, faceId) + content.substring(i + 1);
                 }
-                int faceId = Integer.parseInt(content.substring(index + 6, i));
-                content = content.substring(0, index) + String.format(CQCode.FACE_PATTERN, faceId) + content.substring(i+1);
-            }
-        } while (index > -1);
-        reply.setData(content);
-        return reply;
+            } while (index > -1);
+
+            reply.setData(content);
+
+        } catch (Exception ignore) {
+
+        } finally {
+            return reply;
+        }
     }
 }

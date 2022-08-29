@@ -1,13 +1,10 @@
 package com.nabrothers.psl.server.handler;
 
-import com.nabrothers.psl.sdk.message.CQCodeMessage;
-import com.nabrothers.psl.sdk.message.Message;
-import com.nabrothers.psl.sdk.message.SimpleMessage;
+import com.nabrothers.psl.sdk.message.*;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.dto.GroupDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
-import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
 import com.nabrothers.psl.server.service.MessageService;
@@ -48,7 +45,7 @@ public class GroupMessageHandler extends MessageHandler{
                 }
             } catch (Exception e) {
                 log.error(e);
-                message = new SimpleMessage(e.getMessage());
+                message = new TextMessage(e.getMessage());
             } finally {
                 String response = "";
                 if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
@@ -57,11 +54,17 @@ public class GroupMessageHandler extends MessageHandler{
                     } else {
                         String path = ImageUtils.toImage(message.getMessage());
                         response = String.format(CQCode.IMAGE_PATTERN, path);
-                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
                     }
                 } else {
                     response = message.getRawMessage();
-                    response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
+                }
+
+                if (message.isSupportAt()) {
+                    if (message instanceof SimpleMessage) {
+                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + response;
+                    } else {
+                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
+                    }
                 }
 
                 if (StringUtils.isNotEmpty(response)) {

@@ -13,6 +13,10 @@ public class SimpleMessage extends Message {
         this.data = data;
     }
 
+    {
+        this.setSupportImageMode(false);
+    }
+
     private String data = "";
 
     @Override

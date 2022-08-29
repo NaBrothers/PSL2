@@ -11,6 +11,14 @@ public class TextMessage extends Message {
     private String footer = "";
     private boolean help = true;
 
+    public TextMessage() {
+
+    }
+
+    public TextMessage(String data) {
+        this.data = data;
+    }
+
     @Override
     public String getMessage() {
         StringBuilder sb = new StringBuilder();
