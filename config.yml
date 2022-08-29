@@ -97,7 +97,7 @@ servers:
       port: 5700
       # 反向HTTP超时时间, 单位秒
       # 最小值为5，小于5将会忽略本项设置
-      timeout: 5
+      timeout: 60
       # 长轮询拓展
       long-polling:
         # 是否开启
