@@ -1,10 +1,11 @@
 package com.nabrothers.psl.server.handler;
 
+import com.nabrothers.psl.sdk.message.CQCodeMessage;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.dto.GroupDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
-import com.nabrothers.psl.server.request.CQCode;
+import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
 import com.nabrothers.psl.server.service.MessageService;
@@ -36,8 +37,9 @@ public class GroupMessageHandler extends MessageHandler{
 
         if (messageRequest.isAt()) {
             String message = "";
+            Object result = null;
             try {
-                Object result = context.handle(messageRequest.getMessage());
+                result = context.handle(messageRequest.getMessage());
                 message = result.toString();
                 message = StringUtils.stripEnd(message, "\n");
             } catch (Exception e) {
@@ -46,8 +48,12 @@ public class GroupMessageHandler extends MessageHandler{
             } finally {
                 if (StringUtils.isNotEmpty(message)) {
                     if (GlobalConfig.ENABLE_IMAGE_MODE) {
-                        String path = ImageUtils.toImage(message);
-                        message = String.format(CQCode.IMAGE_PATTERN, path);
+                        if (result instanceof CQCodeMessage) {
+
+                        } else {
+                            String path = ImageUtils.toImage(message);
+                            message = String.format(CQCode.IMAGE_PATTERN, path);
+                        }
                     }
                     Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + message);
                 }

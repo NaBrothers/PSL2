@@ -2,14 +2,12 @@ package com.nabrothers.psl.server.controller;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
-import com.nabrothers.psl.sdk.response.HandlerResponse;
+import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.server.context.HandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +17,8 @@ public class HelpController {
     private HandlerContext context = HandlerContext.getInstance();
 
     @Handler(info = "查看支持的指令")
-    public HandlerResponse help() {
-        HandlerResponse response = new HandlerResponse();
+    public TextMessage help() {
+        TextMessage response = new TextMessage();
         response.setTitle("帮助菜单");
         Map<String, HandlerContext.Node> commands = context.getHead().getChildren();
         StringBuilder sb = new StringBuilder();
@@ -41,8 +39,8 @@ public class HelpController {
     }
 
     @Handler(info = "查看指令详情")
-    public HandlerResponse help(@Param("指令名") String cmd) {
-       HandlerResponse response = new HandlerResponse();
+    public TextMessage help(@Param("指令名") String cmd) {
+       TextMessage response = new TextMessage();
        response.setTitle("指令详情");
        HandlerContext.Node node = context.getHead().getChild(cmd);
        if (node == null) {

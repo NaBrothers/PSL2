@@ -1,8 +1,9 @@
 package com.nabrothers.psl.server.handler;
 
+import com.nabrothers.psl.sdk.message.CQCodeMessage;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
-import com.nabrothers.psl.server.request.CQCode;
+import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.PrivateMessageRequest;
 import com.nabrothers.psl.server.service.MessageService;
@@ -28,8 +29,9 @@ public class PrivateMessageHandler extends MessageHandler{
         PrivateMessageRequest messageRequest = (PrivateMessageRequest) request;
         log.info(String.format(LOG_SYNTAX, messageRequest.getSender().getNickname(), messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
         String message = "";
+        Object result = null;
         try {
-            Object result = context.handle(messageRequest.getMessage());
+            result = context.handle(messageRequest.getMessage());
             message = result.toString();
             message = StringUtils.stripEnd(message, "\n");
         } catch (Exception e) {
@@ -38,8 +40,12 @@ public class PrivateMessageHandler extends MessageHandler{
         } finally {
             if (StringUtils.isNotEmpty(message)) {
                 if (GlobalConfig.ENABLE_IMAGE_MODE) {
-                    String path = ImageUtils.toImage(message);
-                    message = String.format(CQCode.IMAGE_PATTERN, path);
+                    if (result instanceof CQCodeMessage) {
+
+                    } else {
+                        String path = ImageUtils.toImage(message);
+                        message = String.format(CQCode.IMAGE_PATTERN, path);
+                    }
                 }
                 Long msgId = messageService.sendPrivateMessage(messageRequest.getUser_id(), message);
             }

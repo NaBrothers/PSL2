@@ -1,10 +1,10 @@
-package com.nabrothers.psl.sdk.response;
+package com.nabrothers.psl.sdk.message;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-public class HandlerResponse {
+public class TextMessage {
     private String title = "";
     private String header = "";
     private String message = "";
