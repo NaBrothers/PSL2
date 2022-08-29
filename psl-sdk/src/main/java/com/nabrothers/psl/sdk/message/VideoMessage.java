@@ -6,6 +6,10 @@ import lombok.Data;
 public class VideoMessage extends Message implements CQCodeMessage{
     private String url = "";
 
+    {
+        this.setSupportAt(false);
+    }
+
     @Override
     public String getMessage() {
         return String.format(CQCode.VIDEO_PATTERN, url);
