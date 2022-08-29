@@ -112,3 +112,4 @@ servers:
       #  secret: ''           # 密钥
       - url: http://127.0.0.1:5701/ # 地址
         secret: ''          # 密钥
+        max-retries: 0

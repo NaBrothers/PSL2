@@ -34,7 +34,7 @@ public class HelpController {
             );
             sb.append("\n");
         }
-        response.setMessage(sb.toString());
+        response.setData(sb.toString());
         return response;
     }
 
@@ -44,7 +44,7 @@ public class HelpController {
        response.setTitle("指令详情");
        HandlerContext.Node node = context.getHead().getChild(cmd);
        if (node == null) {
-           response.setMessage(String.format("找不到指令 [%s]", cmd));
+           response.setData(String.format("找不到指令 [%s]", cmd));
            return response;
        }
        List<HandlerContext.Node> children = node.getAllMethodChildren();
@@ -81,7 +81,7 @@ public class HelpController {
                sb.append("\n");
            }
        }
-       response.setMessage(sb.toString());
+       response.setData(sb.toString());
        return response;
     }
 }

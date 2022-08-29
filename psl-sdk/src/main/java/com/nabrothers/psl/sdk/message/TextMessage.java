@@ -4,15 +4,15 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-public class TextMessage {
+public class TextMessage extends Message {
     private String title = "";
     private String header = "";
-    private String message = "";
+    private String data = "";
     private String footer = "";
     private boolean help = true;
 
     @Override
-    public String toString() {
+    public String getMessage() {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isNotEmpty(title)) {
             sb.append(String.format("===== %s =====\n", title));
@@ -23,7 +23,7 @@ public class TextMessage {
             sb.append("--------------------\n");
         }
 
-        sb.append(StringUtils.stripEnd(message, "\n") + "\n");
+        sb.append(StringUtils.stripEnd(data, "\n") + "\n");
 
         if (StringUtils.isNotEmpty(footer)) {
             sb.append("--------------------\n");
@@ -31,6 +31,11 @@ public class TextMessage {
             sb.append("--------------------\n");
         }
 
-        return sb.toString();
+        return StringUtils.stripEnd(sb.toString(), "\n");
+    }
+
+    @Override
+    public String getRawMessage() {
+        return getMessage();
     }
 }

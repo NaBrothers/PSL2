@@ -1,6 +1,8 @@
 package com.nabrothers.psl.server.handler;
 
 import com.nabrothers.psl.sdk.message.CQCodeMessage;
+import com.nabrothers.psl.sdk.message.Message;
+import com.nabrothers.psl.sdk.message.SimpleMessage;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.dto.GroupDTO;
@@ -36,26 +38,34 @@ public class GroupMessageHandler extends MessageHandler{
                 messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
 
         if (messageRequest.isAt()) {
-            String message = "";
-            Object result = null;
+            Message message = null;
             try {
-                result = context.handle(messageRequest.getMessage());
-                message = result.toString();
-                message = StringUtils.stripEnd(message, "\n");
+                Object result = context.handle(messageRequest.getMessage());
+                if (result instanceof Message) {
+                    message = (Message) result;
+                } else {
+                    message = new SimpleMessage(result.toString());
+                }
             } catch (Exception e) {
                 log.error(e);
-                message = e.getMessage();
+                message = new SimpleMessage(e.getMessage());
             } finally {
-                if (StringUtils.isNotEmpty(message)) {
-                    if (GlobalConfig.ENABLE_IMAGE_MODE) {
-                        if (result instanceof CQCodeMessage) {
-
-                        } else {
-                            String path = ImageUtils.toImage(message);
-                            message = String.format(CQCode.IMAGE_PATTERN, path);
-                        }
+                String response = "";
+                if (GlobalConfig.ENABLE_IMAGE_MODE) {
+                    if (message instanceof CQCodeMessage) {
+                        response = message.getMessage();
+                    } else {
+                        String path = ImageUtils.toImage(message.getMessage());
+                        response = String.format(CQCode.IMAGE_PATTERN, path);
+                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
                     }
-                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + message);
+                } else {
+                    response = message.getRawMessage();
+                    response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
+                }
+
+                if (StringUtils.isNotEmpty(response)) {
+                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
                 }
             }
         }

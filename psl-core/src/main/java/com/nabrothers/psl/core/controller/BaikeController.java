@@ -5,13 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
+import com.nabrothers.psl.sdk.message.AudioMessage;
 import org.springframework.stereotype.Controller;
 
 @Controller
 @Handler(command = "啥是")
 public class BaikeController {
     @Handler(info = "问懂哥问题，懂哥啥都懂")
-    public String whatis(@Param("词条名") String arg) {
+    public AudioMessage whatis(@Param("词条名") String arg) {
+        AudioMessage audioMessage = new AudioMessage();
         String retStr = HttpUtils.doGet(String.format("https://baike.baidu.com/api/openapi/BaikeLemmaCardApi?appid=%d&bk_key=%s", 379020, arg));
         String answer = "";
         if (retStr != null) {
@@ -22,6 +24,7 @@ public class BaikeController {
                 answer = "你搁这说什么b话呢";
             }
         }
-        return answer;
+        audioMessage.setText(answer);
+        return audioMessage;
     }
 }
