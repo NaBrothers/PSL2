@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,17 +22,27 @@ public class HelpController {
         TextMessage response = new TextMessage();
         response.setTitle("帮助菜单");
         Map<String, HandlerContext.Node> commands = context.getHead().getChildren();
+        List<String> keys = new ArrayList<>(commands.keySet());
+
+        keys.sort((a, b) -> {
+            if (a.length() == b.length()) {
+                return a.compareTo(b);
+            } else if (a.length() < b.length()){
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, HandlerContext.Node> command : commands.entrySet()) {
-            HandlerContext.HandlerMethod handlerMethod = command.getValue().getDefaultHandler();
+        for (String key : keys) {
+            HandlerContext.HandlerMethod handlerMethod = commands.get(key).getDefaultHandler();
             assert handlerMethod != null;
             if (handlerMethod.isHidden()) {
                 continue;
             }
-            sb.append(String.format("[%s] %s",
-                    command.getKey(),
-                    StringUtils.isEmpty(handlerMethod.getInfo()) ? "暂无说明" : handlerMethod.getInfo())
-            );
+
+            sb.append(String.format("[%s] %s", key, StringUtils.isEmpty(handlerMethod.getInfo()) ? "暂无说明" : handlerMethod.getInfo()));
             sb.append("\n");
         }
         response.setData(sb.toString());
