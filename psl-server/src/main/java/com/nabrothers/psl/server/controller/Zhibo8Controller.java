@@ -16,12 +16,23 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @Handler(command = "看看球")
 @Log4j2
 public class Zhibo8Controller {
     private static volatile boolean start = false;
+
+    private static final Map<String, String> typeMap = new HashMap(){{
+        put("football", "足球");
+        put("basketball", "篮球");
+        put("game", "电竞");
+        put("other", "其他");
+    }};
 
     @Resource
     private MessageService messageService;
@@ -33,22 +44,49 @@ public class Zhibo8Controller {
         String url = "https://bifen4m.qiumibao.com/json/list.htm?_t=" + System.currentTimeMillis();
         String retStr = HttpUtils.doGet(url);
         JSONArray result = JSON.parseObject(retStr).getJSONArray("list");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+        List<JSONObject> resultList = result.stream().map(a -> (JSONObject)a)
+                .filter(a -> {
+                    try {
+                        return sdf.parse(a.getString("start")).getTime() > System.currentTimeMillis() - 6 * 60 * 60 * 1000;
+                    } catch (ParseException e) {
+                        return false;
+                    }
+                })
+                .sorted(Comparator.comparing(a -> a.getString("start")))
+                .collect(Collectors.toList());
+
+        Map<String, List<JSONObject>> map = new HashMap<>();
+        for (JSONObject jsonObject : resultList) {
+            String type = typeMap.get(jsonObject.getString("type"));
+            if (map.get(type) == null) {
+                map.put(type, new ArrayList<>());
+            }
+            map.get(type).add(jsonObject);
+        }
+
         StringBuilder sb = new StringBuilder();
-        for (Object obj : result) {
-            JSONObject jsonObject = (JSONObject) obj;
-            if (jsonObject.getString("is_prima").equals("0")) {
+        for (Map.Entry<String, List<JSONObject>> entry : map.entrySet()) {
+            if (entry.getValue().isEmpty()) {
                 continue;
             }
-            sb.append(String.format("[%s] %s %s %s-%s %s %s",
-                    jsonObject.getString("id"),
-                    jsonObject.getString("time"),
-                    jsonObject.getString("home_team"),
-                    jsonObject.getString("home_score"),
-                    jsonObject.getString("visit_score"),
-                    jsonObject.get("visit_team"),
-                    jsonObject.get("period_cn")
-            ));
-            sb.append("\n");
+            sb.append("===== " + entry.getKey() + " ======\n");
+            for (JSONObject jsonObject : entry.getValue()) {
+                if (jsonObject.getString("is_prima").equals("1")) {
+                    sb.append("★ ");
+                }
+                sb.append(String.format("[%s] %s %s %s-%s %s %s",
+                        jsonObject.getString("id"),
+                        jsonObject.getString("time"),
+                        jsonObject.getString("home_team"),
+                        jsonObject.getString("home_score"),
+                        jsonObject.getString("visit_score"),
+                        jsonObject.get("visit_team"),
+                        jsonObject.get("period_cn")
+                ));
+                sb.append("\n");
+            }
         }
         textMessage.setData(sb.toString());
         return textMessage;
@@ -103,10 +141,10 @@ public class Zhibo8Controller {
                             if (Integer.parseInt(jsonObject.getString("live_sid")) < i) {
                                 continue;
                             }
-                            String msg = String.format("[%s] (%s-%s) %s",
-                                    jsonObject.getString("live_ptime"),
+                            String msg = String.format("(%s-%s) [%s] %s",
                                     jsonObject.getString("home_score"),
                                     jsonObject.getString("visit_score"),
+                                    jsonObject.getString("live_ptime"),
                                     jsonObject.getString("live_text"));
                             messageService.sendGroupMessage(groupId, msg);
                             i++;
