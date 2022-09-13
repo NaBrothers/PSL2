@@ -47,7 +47,7 @@ public class PluginManager {
                     plugin.setPath(property.getCanonicalPath());
                     log.info("加载插件\n" + plugin);
 
-                    context.load(plugin.getPackageName());
+                    context.load(plugin);
 
                     plugins.add(plugin);
                 }

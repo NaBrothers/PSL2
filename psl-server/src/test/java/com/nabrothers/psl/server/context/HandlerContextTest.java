@@ -1,6 +1,7 @@
 package com.nabrothers.psl.server.context;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
+import com.nabrothers.psl.server.dto.Plugin;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +22,9 @@ public class HandlerContextTest {
 
     @PostConstruct
     private void init() {
-        context.load("com.nabrothers.psl.server");
+        Plugin plugin = new Plugin();
+        plugin.setPackageName("com.nabrothers.psl.server");
+        context.load(plugin);
     }
 
     @Test

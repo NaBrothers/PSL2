@@ -78,4 +78,9 @@ public class GambleController {
         message.setData(sb.toString());
         return message;
     }
+
+    @Handler(command = "下注", info = "小赌怡情，大赌伤身")
+    public String bet(@Param("比赛ID") String id, @Param("胜平负") String winner, @Param("金额") String amount) {
+        return null;
+    }
 }

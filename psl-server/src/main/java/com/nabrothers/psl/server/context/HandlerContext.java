@@ -3,7 +3,10 @@ package com.nabrothers.psl.server.context;
 import com.google.common.base.Joiner;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
+import com.nabrothers.psl.sdk.context.HandlerInterceptor;
+import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.server.config.GlobalConfig;
+import com.nabrothers.psl.server.dto.Plugin;
 import com.nabrothers.psl.server.service.DefaultReplyService;
 import com.nabrothers.psl.server.service.impl.DefaultReplyServiceImpl;
 import com.nabrothers.psl.server.utils.ApplicationContextUtils;
@@ -11,6 +14,7 @@ import com.nabrothers.psl.server.utils.CommonUtils;
 import lombok.extern.log4j.Log4j2;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
@@ -23,6 +27,8 @@ import java.util.stream.Collectors;
 @Log4j2
 public class HandlerContext {
     private static HandlerContext instance = new HandlerContext();
+
+    private static ThreadLocal<Plugin> plugin = new ThreadLocal<>();
 
     private static ThreadLocal<String> cmd = new ThreadLocal<>();
 
@@ -86,6 +92,7 @@ public class HandlerContext {
         private String info;
         private String command;
         private boolean hidden;
+        private Plugin plugin;
 
         public Method getMethod() {
             return method;
@@ -102,29 +109,58 @@ public class HandlerContext {
         public boolean isHidden() {
             return hidden;
         }
+
+        public Plugin getPlugin() {
+            return plugin;
+        }
     }
 
     private Node head = new Node();
 
     private Set<String> packages = new HashSet<>();
 
+    private Map<String, List<HandlerInterceptor>> interceptors = new HashMap<>();
+
     public static HandlerContext getInstance() {
         return instance;
     }
 
-    public void load(String name) {
+    public void load(Plugin plugin) {
+        String name = plugin.getPackageName();
         if (packages.contains(name)) {
             return;
         }
+        this.plugin.set(plugin);
         try {
             Reflections reflections = new Reflections(new ConfigurationBuilder().
                     setUrls(ClasspathHelper.forPackage(name)).
-                    setScanners(new MethodAnnotationsScanner()));
+                    setScanners(new MethodAnnotationsScanner(), new SubTypesScanner()));
             if (reflections.getConfiguration().getUrls().isEmpty()) {
                 throw new ClassNotFoundException(name);
             }
+            // 处理拦截器
+            Set<Class<? extends HandlerInterceptor>> interceptors = reflections.getSubTypesOf(HandlerInterceptor.class);
+            this.interceptors.put(name, interceptors.stream()
+                    .filter(clazz -> clazz.getPackage().getName().startsWith(name))
+                    .map(clazz -> {
+                        try {
+                            return clazz.newInstance();
+                        } catch (Exception e) {
+                            log.error(e);
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList())
+            );
+
+            // 处理Handler注解
             Set<Method> methods = reflections.getMethodsAnnotatedWith(Handler.class);
+            int count = 0;
             for (Method method : methods) {
+                if (!method.getDeclaringClass().getPackage().getName().startsWith(name)) {
+                    continue;
+                }
                 Handler annotation = method.getDeclaredAnnotation(Handler.class);
                 String cmd = annotation.command();
                 Class clazz = method.getDeclaringClass();
@@ -134,13 +170,14 @@ public class HandlerContext {
                 }
                 List<String> commands = Arrays.asList(cmd.split(" "));
                 _parse(head, commands, method);
+                count++;
             }
             packages.add(name);
-            log.info("插件包加载成功：" + name + ", 共加载 " + methods.size() + " 个命令");
+            log.info("插件包加载成功：" + name + ", 共加载 " + count + " 个命令");
         } catch (Exception e) {
             log.error("插件包加载失败：" + name, e);
-            return;
         }
+        this.plugin.remove();
     }
 
     private void _parse(Node node, List<String> commands, Method method) {
@@ -158,7 +195,7 @@ public class HandlerContext {
             handlerMethod.command = annotation.command();
             handlerMethod.info = annotation.info();
             handlerMethod.hidden = method.isAnnotationPresent(Hidden.class) || method.getDeclaringClass().isAnnotationPresent(Hidden.class);
-
+            handlerMethod.plugin = plugin.get();
             return;
         }
 
@@ -197,6 +234,67 @@ public class HandlerContext {
         }
     }
 
+    private Object _invoke(HandlerMethod handlerMethod, List<String> args) {
+        List<HandlerInterceptor> availableInterceptors = interceptors.get(handlerMethod.getPlugin().getPackageName())
+                .stream().filter(interceptor -> handlerMethod.getMethod().getDeclaringClass().getPackage().getName().matches(interceptor.scope()))
+                .collect(Collectors.toList());
+
+        boolean passAll = true;
+        for (HandlerInterceptor interceptor : availableInterceptors) {
+
+            try {
+                boolean result = interceptor.preHandle(SessionContext.get());
+                if (result == false) {
+                    passAll = false;
+                    log.warn("会话未通过拦截器 {}: {}", interceptor.getClass().getName(), SessionContext.get());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("拦截器异常:\n" +
+                        e.getMessage() + "\n" +
+                        "[异常堆栈]\n" +
+                        getStackTrace(e));
+            }
+        }
+
+        Object result = null;
+        if (passAll) {
+            try {
+                Object obj;
+                try {
+                    obj = ApplicationContextUtils.getBean(handlerMethod.method.getDeclaringClass());
+                } catch (Exception e) {
+                    log.warn("找不到Bean，创建新实例: " + handlerMethod.method.getDeclaringClass());
+                    obj = handlerMethod.method.getDeclaringClass().newInstance();
+                }
+                result =  handlerMethod.method.invoke(obj, args.toArray());
+            } catch (InvocationTargetException e) {
+                Throwable invocationTargetException = e.getTargetException();
+                throw new RuntimeException("函数调用异常:\n" +
+                        invocationTargetException.getMessage() + "\n" +
+                        "[异常堆栈]\n" +
+                        getStackTrace(invocationTargetException));
+            } catch (Exception e) {
+                throw new RuntimeException("其他异常：\n" + e.getMessage());
+            }
+        }
+
+        for (HandlerInterceptor interceptor : availableInterceptors) {
+            if (!handlerMethod.getMethod().getDeclaringClass().getPackage().getName().matches(interceptor.scope())) {
+                continue;
+            }
+            try {
+                interceptor.postHandle(SessionContext.get());
+            } catch (Exception e) {
+                throw new RuntimeException("拦截器异常:\n" +
+                        e.getMessage() + "\n" +
+                        "[异常堆栈]\n" +
+                        getStackTrace(e));
+            }
+        }
+
+        return result;
+    }
+
     private Object invoke(Node node, List<String> args) {
         if (node.handlers.isEmpty()) {
             if (GlobalConfig.ENABLE_DEFAULT_REPLY) {
@@ -213,24 +311,7 @@ public class HandlerContext {
                     Joiner.on("/").join(node.handlers.keySet()),
                     node.command.split(" ")[0]));
         }
-        try {
-            Object obj;
-            try {
-                obj = ApplicationContextUtils.getBean(handlerMethod.method.getDeclaringClass());
-            } catch (Exception e) {
-                log.warn("找不到Bean，创建新实例: " + handlerMethod.method.getDeclaringClass());
-                obj = handlerMethod.method.getDeclaringClass().newInstance();
-            }
-            return handlerMethod.method.invoke(obj, args.toArray());
-        } catch (InvocationTargetException e) {
-            Throwable invocationTargetException = e.getTargetException();
-            throw new RuntimeException("函数调用异常:\n" +
-                    invocationTargetException.getMessage() + "\n" +
-                    "[异常堆栈]\n" +
-                    getStackTrace(invocationTargetException));
-        } catch (Exception e) {
-            throw new RuntimeException("其他异常：\n" + e.getMessage());
-        }
+        return _invoke(handlerMethod, args);
     }
 
     private String getStackTrace(Throwable e) {
