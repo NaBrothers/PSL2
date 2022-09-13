@@ -1,7 +1,7 @@
 package com.nabrothers.psl.server.manager;
 
-import com.nabrothers.psl.server.dto.GroupDTO;
-import com.nabrothers.psl.server.dto.UserDTO;
+import com.nabrothers.psl.sdk.dto.GroupDTO;
+import com.nabrothers.psl.sdk.dto.UserDTO;
 import com.nabrothers.psl.server.service.GroupService;
 import com.nabrothers.psl.server.service.UserService;
 import lombok.extern.log4j.Log4j2;

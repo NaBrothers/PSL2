@@ -5,7 +5,7 @@ import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.PrivateMessageRequest;
-import com.nabrothers.psl.server.service.MessageService;
+import com.nabrothers.psl.sdk.service.MessageService;
 import com.nabrothers.psl.server.utils.ImageUtils;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;

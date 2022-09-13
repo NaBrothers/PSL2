@@ -1,7 +1,7 @@
 package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.nabrothers.psl.server.service.MessageService;
+import com.nabrothers.psl.sdk.service.MessageService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import org.springframework.stereotype.Service;
 

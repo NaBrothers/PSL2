@@ -1,4 +1,4 @@
-package com.nabrothers.psl.server.dto;
+package com.nabrothers.psl.sdk.dto;
 
 import lombok.Data;
 

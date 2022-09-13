@@ -1,4 +1,4 @@
-package com.nabrothers.psl.server.service;
+package com.nabrothers.psl.sdk.service;
 
 public interface MessageService {
     Long sendPrivateMessage(Long id, String msg);

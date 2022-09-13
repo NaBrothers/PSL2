@@ -1,4 +1,4 @@
-package com.nabrothers.psl.server.request.enums;
+package com.nabrothers.psl.sdk.enums;
 
 public enum MessageType {
     MESSAGE_PRIVATE("private"), MESSAGE_GROUP("group");

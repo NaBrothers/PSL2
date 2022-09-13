@@ -1,7 +1,7 @@
 package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.nabrothers.psl.server.dto.UserDTO;
+import com.nabrothers.psl.sdk.dto.UserDTO;
 import com.nabrothers.psl.server.service.UserService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import lombok.extern.log4j.Log4j2;

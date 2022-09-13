@@ -1,6 +1,6 @@
 package com.nabrothers.psl.server.service;
 
-import com.nabrothers.psl.server.dto.GroupDTO;
+import com.nabrothers.psl.sdk.dto.GroupDTO;
 
 import java.util.List;
 

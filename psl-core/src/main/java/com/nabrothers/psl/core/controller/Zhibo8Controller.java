@@ -1,17 +1,16 @@
-package com.nabrothers.psl.server.controller;
+package com.nabrothers.psl.core.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
-import com.nabrothers.psl.sdk.message.SimpleMessage;
+import com.nabrothers.psl.sdk.context.Session;
+import com.nabrothers.psl.sdk.context.SessionContext;
+import com.nabrothers.psl.sdk.enums.MessageType;
 import com.nabrothers.psl.sdk.message.TextMessage;
-import com.nabrothers.psl.server.context.Session;
-import com.nabrothers.psl.server.context.SessionContext;
-import com.nabrothers.psl.server.request.enums.MessageType;
-import com.nabrothers.psl.server.service.MessageService;
-import com.nabrothers.psl.server.utils.HttpUtils;
+import com.nabrothers.psl.sdk.service.MessageService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Controller;
 

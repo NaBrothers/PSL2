@@ -1,8 +1,9 @@
-package com.nabrothers.psl.server.context;
+package com.nabrothers.psl.sdk.context;
 
-import com.nabrothers.psl.server.dto.GroupDTO;
-import com.nabrothers.psl.server.dto.UserDTO;
-import com.nabrothers.psl.server.request.enums.MessageType;
+
+import com.nabrothers.psl.sdk.dto.GroupDTO;
+import com.nabrothers.psl.sdk.dto.UserDTO;
+import com.nabrothers.psl.sdk.enums.MessageType;
 import lombok.Data;
 
 @Data
