@@ -143,12 +143,19 @@ public class HandlerContext {
             this.interceptors.put(name, interceptors.stream()
                     .filter(clazz -> clazz.getPackage().getName().startsWith(name))
                     .map(clazz -> {
+                        HandlerInterceptor obj = null;
                         try {
-                            return clazz.newInstance();
+                            obj = ApplicationContextUtils.getBean(clazz);
                         } catch (Exception e) {
-                            log.error(e);
+                            log.warn("找不到Bean，创建新实例: " + clazz);
+                            try {
+                                obj = clazz.newInstance();
+                            } catch (Exception e1) {
+                                log.error(e);
+                                return null;
+                            }
                         }
-                        return null;
+                        return obj;
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList())

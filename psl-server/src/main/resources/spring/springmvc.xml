@@ -11,8 +11,9 @@
 
     <!--SpringMVC只是控制网站跳转逻辑  -->
     <!-- 只扫描控制器 -->
-    <context:component-scan base-package="com.nabrothers.*" use-default-filters="false">
+    <context:component-scan base-package="*" use-default-filters="false">
         <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="regex" expression="org.springframework.*" />
     </context:component-scan>
 
     <!-- 视图解析器 -->
