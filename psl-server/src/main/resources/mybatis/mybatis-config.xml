@@ -3,6 +3,21 @@
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+    <properties>
+        <!-- testWhileIdle会定时校验numTestsPerEvictionRun个连接，只要发现连接失效，就将其移除再重新创建-->
+        <property name= "testWhileIdle" value="true" />
+        <!-- 从池中取连接的时候，发现当前连接失效，再创建一个连接供当前查询使用-->
+        <property name= "testOnBorrow" value="true" />
+        <!-- 连接在return给pool时，是否提前进行validate操作-->
+        <property name= "testOnReturn" value="false" />
+        <!-- 测试连接是否有效的sql-->
+        <property name= "validationQuery" value="select 1" />
+        <!-- 检查连接池中空闲的连接的频率：毫秒-->
+        <property name= "timeBetweenEvictionRunsMillis" value="30000" />
+        <!-- 每次检查空闲连接的个数-->
+        <property name= "numTestsPerEvictionRun" value="30" />
+    </properties>
+
     <settings>
         <setting name="mapUnderscoreToCamelCase" value="true"/>
         <setting name="jdbcTypeForNull" value="NULL"/>

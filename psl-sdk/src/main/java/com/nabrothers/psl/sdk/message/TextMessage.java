@@ -27,7 +27,7 @@ public class TextMessage extends Message {
         }
         if (StringUtils.isNotEmpty(header)) {
             sb.append("--------------------\n");
-            sb.append(header + "\n");
+            sb.append(StringUtils.stripEnd(header, "\n") + "\n");
             sb.append("--------------------\n");
         }
 
@@ -35,7 +35,7 @@ public class TextMessage extends Message {
 
         if (StringUtils.isNotEmpty(footer)) {
             sb.append("--------------------\n");
-            sb.append(footer + "\n");
+            sb.append(StringUtils.stripEnd(footer, "\n") + "\n");
             sb.append("--------------------\n");
         }
 

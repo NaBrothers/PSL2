@@ -1,6 +1,7 @@
 package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.service.MessageService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import org.springframework.stereotype.Service;
@@ -29,5 +30,16 @@ public class MessageServiceImpl implements MessageService {
             return -1L;
         }
         return res.getLong("message_id");
+    }
+
+    @Override
+    public Long send(Session session, String message) {
+        switch (session.getMessageType()) {
+            case MESSAGE_PRIVATE:
+                return sendPrivateMessage(session.getSender().getId(), message);
+            case MESSAGE_GROUP:
+                return sendGroupMessage(session.getGroup().getId(), message);
+        }
+        return 0L;
     }
 }
