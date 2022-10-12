@@ -17,6 +17,8 @@ import org.apache.http.util.EntityUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 
 @Log4j2
@@ -103,5 +105,13 @@ public class HttpUtils {
             }
         }
         return null;
+    }
+
+    public static String getRedirectUrl(String path) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(path)
+                .openConnection();
+        conn.setInstanceFollowRedirects(false);
+        conn.setConnectTimeout(5000);
+        return conn.getHeaderField("Location");
     }
 }
