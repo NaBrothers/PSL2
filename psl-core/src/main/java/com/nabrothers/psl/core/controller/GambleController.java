@@ -42,8 +42,7 @@ public class GambleController {
 
     @PostConstruct
     public void init() {
-        refreshMatchStatus();
-        executor.schedule(this::refreshMatchStatus, 60, TimeUnit.SECONDS);
+        executor.scheduleWithFixedDelay(this::refreshMatchStatus, 0, 60, TimeUnit.SECONDS);
     }
 
     @Handler(info = "当前可以赌的比赛")
