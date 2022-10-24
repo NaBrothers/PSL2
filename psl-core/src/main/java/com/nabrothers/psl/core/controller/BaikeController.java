@@ -12,8 +12,7 @@ import org.springframework.stereotype.Controller;
 @Handler(command = "啥是")
 public class BaikeController {
     @Handler(info = "问懂哥问题，懂哥啥都懂")
-    public AudioMessage whatis(@Param("词条名") String arg) {
-        AudioMessage audioMessage = new AudioMessage();
+    public String whatis(@Param("词条名") String arg) {
         String retStr = HttpUtils.doGet(String.format("https://baike.baidu.com/api/openapi/BaikeLemmaCardApi?appid=%d&bk_key=%s", 379020, arg));
         String answer = "";
         if (retStr != null) {
@@ -24,7 +23,6 @@ public class BaikeController {
                 answer = "你搁这说什么b话呢";
             }
         }
-        audioMessage.setText(answer);
-        return audioMessage;
+        return answer;
     }
 }
