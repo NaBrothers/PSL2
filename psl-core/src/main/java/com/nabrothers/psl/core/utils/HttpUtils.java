@@ -16,9 +16,13 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 
 @Log4j2
@@ -114,4 +118,42 @@ public class HttpUtils {
         conn.setConnectTimeout(5000);
         return conn.getHeaderField("Location");
     }
+
+    public static boolean download(String urlString, String fileName){
+        FileOutputStream os = null;
+        InputStream is = null;
+        try {
+            URL url = new URL(urlString);
+            URLConnection con = url.openConnection();
+            is = con.getInputStream();
+
+            byte[] bs = new byte[10240];
+            int len;
+
+            File file = new File(fileName);
+
+            os = new FileOutputStream(file, true);
+
+            while ((len = is.read(bs)) != -1) {
+                os.write(bs, 0, len);
+            }
+        } catch (Exception e) {
+            log.error(e);
+            return false;
+        } finally {
+            try {
+                if (os != null) {
+                    os.close();
+                }
+                if (is != null) {
+                    is.close();
+                }
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+        return true;
+    }
+
+
 }

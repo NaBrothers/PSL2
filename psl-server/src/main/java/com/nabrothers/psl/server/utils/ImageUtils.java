@@ -32,7 +32,7 @@ public class ImageUtils {
      */
     private static Font font;
 
-    private static final String DEFAULT_PATH = "./go-cqhttp/data/images/text2image/";
+    private static final String DEFAULT_PATH = "./go-cqhttp/data/images/cache/";
 
     private static final String FONT_PATH = "./assets/sarasa.ttf";
 
@@ -86,7 +86,7 @@ public class ImageUtils {
         String fileName = String.format("%s.jpg",  message.hashCode());
         File file = new File(DEFAULT_PATH + fileName);
         if (file.exists()) {
-            return "text2image/" + fileName;
+            return "cache/" + fileName;
         }
 
         String[] strArr = message.split("\n");
@@ -173,7 +173,7 @@ public class ImageUtils {
                 log.error(e);
             }
         }
-        return "text2image/" + fileName;
+        return "cache/" + fileName;
     }
 
 }

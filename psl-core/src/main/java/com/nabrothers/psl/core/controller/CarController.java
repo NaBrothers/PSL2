@@ -17,7 +17,9 @@ public class CarController {
         JSONObject obj = ret.getJSONObject("result").getJSONArray("list").getJSONObject(0);
         String url = obj.getString("url");
         String title = obj.getString("title");
-        message.setUrl(url);
+        String fileName = url.hashCode() + ".jpg";
+        HttpUtils.download(url, "./go-cqhttp/data/images/cache/" + fileName);
+        message.setUrl("cache/" + fileName);
         message.setInfo(title);
         return message;
     }
