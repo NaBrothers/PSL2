@@ -127,7 +127,7 @@ public class HttpUtils {
             URLConnection con = url.openConnection();
             is = con.getInputStream();
 
-            byte[] bs = new byte[10240];
+            byte[] bs = new byte[1024*1024*10];
             int len;
 
             File file = new File(fileName);
