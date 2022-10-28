@@ -10,7 +10,7 @@ public class GenshinController {
     @Handler(command = "来个原", info = "原批诱捕器")
     public ImageMessage getGenshin() throws Exception {
         ImageMessage response = new ImageMessage();
-        String retStr = HttpUtils.getRedirectUrl("https://api.dujin.org/pic/yuanshen");
+        String retStr = HttpUtils.getRedirectUrl("https://api.dujin.org/pic/yuanshen/");
         response.setUrl(retStr);
         return response;
     }
