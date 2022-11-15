@@ -38,7 +38,7 @@ public class ImageUtils {
 
     private static final int FONT_SIZE = 14;
 
-    private static final int LINE_CHAR_COUNT = 30*2; //每行最大字符数
+    private static final int LINE_CHAR_COUNT = 50*2; //每行最大字符数
 
     @PostConstruct
     public void init() {
