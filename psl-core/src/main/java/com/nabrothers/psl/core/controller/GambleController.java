@@ -21,12 +21,14 @@ import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Controller
 @Handler(command = "菠菜")
@@ -243,5 +245,21 @@ public class GambleController {
                 }
             }
         }
+    }
+
+    @Handler(command = "排名", info = "查看土豪排名")
+    public TextMessage scoreboard() {
+        TextMessage message = new TextMessage();
+        message.setTitle("土豪榜");
+        List<UserDTO> users = userDAO.queryAll();
+        users = users.stream().sorted(Comparator.comparing(UserDTO::getMoney, Comparator.reverseOrder())).collect(Collectors.toList());
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (UserDTO user : users) {
+            i++;
+            sb.append(String.format("%d - [%d] %s $%d\n", i, user.getId(), user.getName(), user.getMoney()));
+        }
+        message.setData(sb.toString());
+        return message;
     }
 }

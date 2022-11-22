@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public interface UserDAO {
     @Insert("insert into `User` (userId,name) values (#{userId},#{name})")
@@ -16,4 +18,7 @@ public interface UserDAO {
 
     @Select("select * from `User` where userId = #{userId}")
     UserDTO queryByUserId(Long userId);
+
+    @Select("select * from `User`")
+    List<UserDTO> queryAll();
 }
