@@ -4,16 +4,17 @@ import com.nabrothers.psl.core.dao.TransactionDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.core.exception.TransactionException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
 
 @Service
 public class TransactionService {
 
-    @Autowired
+    @Resource
     private UserDAO userDAO;
 
-    @Autowired
+    @Resource
     private TransactionDAO transactionDAO;
 
     public void add(Long userId, Long amount) {

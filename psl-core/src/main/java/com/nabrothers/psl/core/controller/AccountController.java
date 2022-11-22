@@ -6,13 +6,14 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.message.TextMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+
+import javax.annotation.Resource;
 
 @Controller
 public class AccountController {
 
-    @Autowired
+    @Resource
     private UserDAO userDAO;
 
     @Handler(command = "账号", info = "查看账号信息")

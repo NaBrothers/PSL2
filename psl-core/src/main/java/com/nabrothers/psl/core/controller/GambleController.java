@@ -7,6 +7,7 @@ import com.nabrothers.psl.core.dao.BetRecordDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.BetRecordDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
+import com.nabrothers.psl.core.service.TransactionService;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
@@ -15,6 +16,7 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.transaction.TransactionException;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +39,9 @@ public class GambleController {
 
     @Resource
     private UserDAO userDAO;
+
+    @Resource
+    private TransactionService transactionService;
 
     private ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
@@ -157,6 +162,12 @@ public class GambleController {
             return "暂无赔率信息";
         }
 
+        try {
+            transactionService.deduct(SessionContext.get().getSender().getId(), Long.valueOf(amount));
+        } catch (TransactionException e) {
+            return e.getMessage();
+        }
+
         JSONArray odds = oddsChange.getJSONObject(0).getJSONArray("row");
 
         BetRecordDTO betRecordDTO = new BetRecordDTO();
@@ -212,6 +223,9 @@ public class GambleController {
                                     money = (long) (record.getLose() * record.getAmount());
                                 }
                                 sb.append("恭喜您获得 " + money);
+                                try {
+                                    transactionService.add(record.getUserId(), money);
+                                } catch (TransactionException ignore) {}
                             } else {
                                 sb.append("再接再厉");
                             }
