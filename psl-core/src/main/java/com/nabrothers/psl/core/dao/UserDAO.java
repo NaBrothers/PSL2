@@ -3,6 +3,7 @@ package com.nabrothers.psl.core.dao;
 import com.nabrothers.psl.core.dto.UserDTO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,5 +15,5 @@ public interface UserDAO {
     UserDTO queryById(Long id);
 
     @Select("select * from `User` where userId = #{userId}")
-    UserDTO queryByUserId(Long id);
+    UserDTO queryByUserId(Long userId);
 }
