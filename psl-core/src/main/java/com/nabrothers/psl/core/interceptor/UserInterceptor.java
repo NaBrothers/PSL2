@@ -25,6 +25,7 @@ public class UserInterceptor extends HandlerInterceptor {
             userDTO = new UserDTO();
             userDTO.setUserId(session.getSender().getId());
             userDTO.setName(session.getSender().getNickname());
+            userDTO.setMoney(1000000L);
             userDAO.insert(userDTO);
             messageService.send(session, String.format("欢迎新玩家 [%s] 加入游戏！", session.getSender().getNickname()));
         }
