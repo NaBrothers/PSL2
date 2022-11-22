@@ -7,6 +7,7 @@ import com.nabrothers.psl.core.dao.BetRecordDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.BetRecordDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
+import com.nabrothers.psl.core.exception.TransactionException;
 import com.nabrothers.psl.core.service.TransactionService;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
@@ -16,7 +17,6 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.transaction.TransactionException;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
@@ -154,6 +154,13 @@ public class GambleController {
         String infoStr = HttpUtils.doGet(String.format("https://m.zhibo8.cc/json/match/%s.htm", id));
         if (infoStr == null) {
             return "当前比赛不存在";
+        }
+
+        JSONObject info = JSONObject.parseObject(infoStr);
+        Long startTime = Long.valueOf(info.getString("start_time")) * 1000;
+        Long currentTime = System.currentTimeMillis();
+        if (currentTime > startTime) {
+            return "比赛开始后无法下注";
         }
 
         String resStr = HttpUtils.doGet(String.format("https://odds.duoduocdn.com/football/detail?id=%s&type=ou&cid=5", id));
