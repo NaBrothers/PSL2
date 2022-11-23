@@ -26,4 +26,7 @@ public interface BetRecordDAO {
 
     @Update("update `BetRecord` set result = #{result} where id = #{id}")
     void updateResultById(@Param("result") Integer result, @Param("id") Long id);
+
+    @Select("select * from `BetRecord`")
+    List<BetRecordDTO> queryAll();
 }

@@ -275,6 +275,25 @@ public class GambleController {
             sb.append(String.format("%d - [%d] %s $%d\n", i, user.getId(), user.getName(), user.getMoney()));
         }
         message.setData(sb.toString());
+        long total = 0L;
+        List<BetRecordDTO> records = betRecordDAO.queryAll();
+        for (BetRecordDTO record : records) {
+            if (record.getResult() == null) {
+                continue;
+            }
+            if (record.getExpect().equals(record.getResult())) {
+                if (record.getExpect() == 1) {
+                    total -= (long) ((record.getWin()-1) * record.getAmount());
+                } else if (record.getExpect() == 0) {
+                    total -= (long) ((record.getDraw()-1) * record.getAmount());
+                } else if (record.getExpect() == -1) {
+                    total -= (long) ((record.getLose()-1) * record.getAmount());
+                }
+            } else {
+                total += record.getAmount();
+            }
+        }
+        message.setFooter("庄家总盈亏：" + (total >= 0 ? "$" + total : "-$" + Math.abs(total)));
         return message;
     }
 }
