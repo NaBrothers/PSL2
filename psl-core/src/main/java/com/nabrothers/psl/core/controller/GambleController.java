@@ -283,11 +283,11 @@ public class GambleController {
             }
             if (record.getExpect().equals(record.getResult())) {
                 if (record.getExpect() == 1) {
-                    total -= (long) ((record.getWin()-1) * record.getAmount());
+                    total -= (long) (record.getWin() * record.getAmount()) - record.getAmount();
                 } else if (record.getExpect() == 0) {
-                    total -= (long) ((record.getDraw()-1) * record.getAmount());
+                    total -= (long) (record.getDraw() * record.getAmount()) - record.getAmount();
                 } else if (record.getExpect() == -1) {
-                    total -= (long) ((record.getLose()-1) * record.getAmount());
+                    total -= (long) (record.getLose() * record.getAmount()) - record.getAmount();
                 }
             } else {
                 total += record.getAmount();
