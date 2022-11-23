@@ -21,10 +21,7 @@ import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -196,6 +193,7 @@ public class GambleController {
     private void refreshMatchStatus() {
         String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_zc");
         JSONArray dateList = JSON.parseObject(retStr).getJSONObject("data").getJSONArray("list");
+        Set<Long> betRecordSet = new HashSet<>();
         for (Object dateObj : dateList) {
             JSONObject date = (JSONObject) dateObj;
             JSONArray games = date.getJSONArray("list");
@@ -212,7 +210,11 @@ public class GambleController {
                 if (game.getString("is_finish").equals("1")) {
                     List<BetRecordDTO> records = betRecordDAO.queryByMatchId(game.getLong("saishi_id"));
                     for (BetRecordDTO record : records) {
+                        if (betRecordSet.contains(record.getId())) {
+                            continue;
+                        }
                         if (record.getResult() == null) {
+                            betRecordSet.add(record.getId());
                             betRecordDAO.updateResultById(res, record.getId());
                             StringBuilder sb = new StringBuilder();
                             sb.append(String.format("[%s] 已完赛，%s %s-%s %s，",
