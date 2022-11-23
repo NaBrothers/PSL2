@@ -267,6 +267,22 @@ public class GambleController {
         TextMessage message = new TextMessage();
         message.setTitle("土豪榜");
         List<UserDTO> users = userDAO.queryAll();
+        List<BetRecordDTO> records = betRecordDAO.queryAll();
+
+        Map<Long, Long> betAmount = new HashMap<>();
+        for (BetRecordDTO record : records) {
+            if (record.getResult() == null) {
+                betAmount.putIfAbsent(record.getUserId(), 0L);
+                betAmount.put(record.getUserId(), betAmount.get(record.getUserId()) + record.getAmount());
+            }
+        }
+
+        users.stream().forEach(user -> {
+            if (betAmount.containsKey(user.getUserId())) {
+                user.setMoney(user.getMoney() + betAmount.get(user.getUserId()));
+            }
+        });
+
         users = users.stream().sorted(Comparator.comparing(UserDTO::getMoney, Comparator.reverseOrder())).collect(Collectors.toList());
         StringBuilder sb = new StringBuilder();
         int i = 0;
@@ -276,7 +292,7 @@ public class GambleController {
         }
         message.setData(sb.toString());
         long total = 0L;
-        List<BetRecordDTO> records = betRecordDAO.queryAll();
+
         for (BetRecordDTO record : records) {
             if (record.getResult() == null) {
                 continue;
