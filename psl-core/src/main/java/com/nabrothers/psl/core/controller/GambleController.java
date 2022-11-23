@@ -17,6 +17,7 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
@@ -47,6 +48,18 @@ public class GambleController {
     @PostConstruct
     public void init() {
         executor.scheduleWithFixedDelay(this::refreshMatchStatus, 0, 60, TimeUnit.SECONDS);
+    }
+
+    @Scheduled(cron = "0 0 12 * * ?")
+    public void dailyReward() {
+        long amount = 100000L;
+        messageService.sendGroupMessage(383250309L, "今日菠菜资金 $" + amount + " 已到账，请查收");
+        List<UserDTO> users = userDAO.queryAll();
+        for (UserDTO user : users) {
+            try {
+                transactionService.add(user.getUserId(), amount);
+            } catch (Exception ignore) {}
+        }
     }
 
     @Handler(info = "当前可以赌的比赛")
