@@ -6,7 +6,7 @@
     <display-name>psl-server</display-name>
     <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>classpath*:spring/*.xml</param-value>
+        <param-value>classpath*:spring/core-appcontext-core.xml</param-value>
     </context-param>
 
     <filter>

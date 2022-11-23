@@ -43,7 +43,7 @@ public class GambleController {
     @Resource
     private TransactionService transactionService;
 
-    private ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    private static ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
     @PostConstruct
     public void init() {
