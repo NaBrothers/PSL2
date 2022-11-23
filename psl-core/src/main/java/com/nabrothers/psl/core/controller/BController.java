@@ -4,6 +4,7 @@ import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.SimpleMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Controller
+@Component
 public class BController {
     @Handler(command = "看看批", info = "看看你的批")
     public SimpleMessage showB() {

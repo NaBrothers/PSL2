@@ -18,6 +18,7 @@ import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
@@ -28,7 +29,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Controller
+@Component
 @Handler(command = "菠菜")
 public class GambleController {
     @Resource

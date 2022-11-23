@@ -5,13 +5,14 @@ import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.VideoMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-@Controller
+@Component
 public class BeautyController {
 
     @Handler(command = "来个妹子", info = "随机发送一个妹子视频")

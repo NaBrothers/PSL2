@@ -6,11 +6,12 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.message.TextMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.Resource;
 
-@Controller
+@Component
 public class AccountController {
 
     @Resource

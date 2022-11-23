@@ -9,11 +9,12 @@ import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.util.*;
 
-@Controller
+@Component
 public class WorldCupController {
     @Handler(command = "抽卡", info = "【世界杯】获取一张2022卡塔尔世界杯球员卡")
     public ImageMessage getCard() {

@@ -12,6 +12,7 @@ import com.nabrothers.psl.sdk.enums.MessageType;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.Resource;
@@ -20,7 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Controller
+@Component
 @Handler(command = "看看球")
 @Log4j2
 public class Zhibo8Controller {
