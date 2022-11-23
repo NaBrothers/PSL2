@@ -5,14 +5,14 @@ import com.nabrothers.psl.sdk.annotation.Param;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.server.context.HandlerContext;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@Component
 @Handler(command = "帮助")
 public class HelpController {
     private HandlerContext context = HandlerContext.getInstance();
