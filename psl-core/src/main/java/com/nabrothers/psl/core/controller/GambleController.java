@@ -213,15 +213,15 @@ public class GambleController {
             JSONArray games = date.getJSONArray("list");
             for (Object gameObj : games) {
                 JSONObject game = (JSONObject) gameObj;
-                Integer left = game.getJSONObject("left_team").getInteger("score");
-                Integer right = game.getJSONObject("right_team").getInteger("score");
-                int res = 0;
-                if (left > right) {
-                    res = 1;
-                } else if (left < right) {
-                    res = -1;
-                }
-                if (game.getString("is_finish").equals("1")) {
+                if (game.getString("is_finish").equals("1") || game.getIntValue("match_status") > 4) {
+                    Integer left = game.getJSONObject("left_team").getInteger("score");
+                    Integer right = game.getJSONObject("right_team").getInteger("score");
+                    int res = 0;
+                    if (left > right) {
+                        res = 1;
+                    } else if (left < right) {
+                        res = -1;
+                    }
                     List<BetRecordDTO> records = betRecordDAO.queryByMatchId(game.getLong("saishi_id"));
                     for (BetRecordDTO record : records) {
                         if (betRecordSet.contains(record.getId())) {
