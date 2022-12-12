@@ -14,15 +14,27 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.message.CQCode;
+import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -371,6 +383,78 @@ public class GambleController {
         }
         message.setData(sb.toString());
 
+        return message;
+    }
+
+    @Handler(command = "盈亏", info = "查看盈亏趋势")
+    public ImageMessage showPlot() throws IOException {
+        ImageMessage message = new ImageMessage();
+        Map<Long, String> users = userDAO.queryAll().stream().collect(Collectors.toMap(UserDTO::getUserId, UserDTO::getName));
+
+        List<BetRecordDTO> records = betRecordDAO.queryAll();
+
+        records = records.stream()
+                .filter(record -> record.getResult() != null)
+                .sorted(Comparator.comparing(BetRecordDTO::getUpdateTime))
+                .collect(Collectors.toList());
+
+        Map<Long, Map<Long, Long>> changeList = new HashMap<>();
+
+        List<Long> matchSeq = new ArrayList<>();
+        matchSeq.add(0L);
+
+        for (BetRecordDTO record : records) {
+            if (!matchSeq.contains(record.getMatchId())) {
+                matchSeq.add(record.getMatchId());
+            }
+            changeList.putIfAbsent(record.getUserId(), new HashMap<>());
+            Map<Long, Long> change = changeList.get(record.getUserId());
+            change.putIfAbsent(record.getMatchId(), 0L);
+            long amount = 0L;
+            if (record.getExpect().equals(record.getResult())) {
+                if (record.getExpect() == 1) {
+                    amount = (long) (record.getWin() * record.getAmount());
+                } else if (record.getExpect() == 0) {
+                    amount = (long) (record.getDraw() * record.getAmount());
+                } else if (record.getExpect() == -1) {
+                    amount = (long) (record.getLose() * record.getAmount());
+                }
+            }
+            amount -= record.getAmount();
+            change.put(record.getMatchId(), change.get(record.getMatchId()) + amount);
+        }
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (Long userId : changeList.keySet()) {
+            Map<Long, Long> change = changeList.get(userId);
+            long sum = 0L;
+            for (Long matchId : matchSeq) {
+                if (change.containsKey(matchId)) {
+                    sum += change.get(matchId);
+                }
+                dataset.addValue(sum, users.get(userId) + "          ", matchId);
+            }
+        }
+
+        // 创建JFreeChart对象
+        JFreeChart chart = ChartFactory.createLineChart(
+                "盈亏变化", // 图标题
+                "比赛", // x轴标题
+                "盈亏", // y轴标题
+                dataset, //数据集
+                PlotOrientation.VERTICAL, //图表方向
+                true, true, false);
+
+        chart.getPlot().setBackgroundPaint(Color.WHITE);
+        for (int i = 0; i < changeList.keySet().size(); i++) {
+            ((CategoryPlot) chart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(3.0f));
+        }
+
+        ((CategoryPlot) chart.getPlot()).getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.DOWN_45);
+
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * matchSeq.size(), 1024);
+        message.setUrl("cache/chart.jpg");
         return message;
     }
 }
