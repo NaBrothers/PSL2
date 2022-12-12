@@ -19,7 +19,6 @@ import com.nabrothers.psl.sdk.service.MessageService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -311,6 +310,67 @@ public class GambleController {
             }
         }
         message.setFooter("庄家总盈亏：" + (total >= 0 ? "$" + total : "-$" + Math.abs(total)));
+        return message;
+    }
+
+    @Handler(command = "排名 胜率", info = "查看胜率排名")
+    public TextMessage winboard() {
+        TextMessage message = new TextMessage();
+        message.setTitle("胜率榜");
+        List<UserDTO> users = userDAO.queryAll();
+        List<BetRecordDTO> records = betRecordDAO.queryAll();
+
+        Map<Long, Long> betCount = new HashMap<>();
+        Map<Long, Long> winCount = new HashMap<>();
+        Map<Long, Set<String>> matchSet = new HashMap<>();
+
+        for (UserDTO user : users) {
+            betCount.putIfAbsent(user.getUserId(), 0L);
+            winCount.putIfAbsent(user.getUserId(), 0L);
+            matchSet.putIfAbsent(user.getUserId(), new HashSet<>());
+        }
+
+        for (BetRecordDTO record : records) {
+            if (record.getResult() != null) {
+                String key = record.getMatchId() + "_" + record.getExpect();
+                if (matchSet.get(record.getUserId()).contains(key)) {
+                    continue;
+                }
+                matchSet.get(record.getUserId()).add(key);
+                betCount.put(record.getUserId(), betCount.get(record.getUserId()) + 1);
+                if (record.getExpect().equals(record.getResult())) {
+                    winCount.put(record.getUserId(), winCount.get(record.getUserId()) + 1);
+                }
+            }
+        }
+
+        users = users.stream().sorted((a,b) -> {
+            if (betCount.get(a.getUserId()) == 0) {
+                return 1;
+            }
+            if (betCount.get(b.getUserId()) == 0) {
+                return 1;
+            }
+            double rateA = 1.0 * winCount.get(a.getUserId()) / betCount.get(a.getUserId());
+            double rateB = 1.0 * winCount.get(b.getUserId()) / betCount.get(b.getUserId());
+            if (rateA < rateB) {
+                return 1;
+            } else if (rateA > rateB) {
+                return -1;
+            } else {
+                return betCount.get(b.getUserId()).compareTo(betCount.get(a.getUserId()));
+            }
+        }).collect(Collectors.toList());
+
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (UserDTO user : users) {
+            i++;
+            double rate = (1.0 * winCount.get(user.getUserId()) / betCount.get(user.getUserId())) * 100;
+            sb.append(String.format("%d - [%d] %s %d手 %d%%\n", i, user.getId(), user.getName(), betCount.get(user.getUserId()), (long) rate));
+        }
+        message.setData(sb.toString());
+
         return message;
     }
 }
