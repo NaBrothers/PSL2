@@ -1,3 +1,6 @@
 [submodule "go-cqhttp"]
 	path = go-cqhttp
 	url = https://github.com/Mrs4s/go-cqhttp.git
+[submodule "proxy_pool"]
+	path = proxy_pool
+	url = ./proxy_pool
