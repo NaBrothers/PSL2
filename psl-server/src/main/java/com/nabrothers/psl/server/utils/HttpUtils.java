@@ -84,6 +84,7 @@ public class HttpUtils {
         HttpGet httpGet = new HttpGet(url);
         httpGet.setHeader("Content-type", "application/json");
         httpGet.setHeader("DataEncoding", "UTF-8");
+        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
         RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(35000).setConnectionRequestTimeout(35000).setSocketTimeout(60000).build();
         httpGet.setConfig(requestConfig);
         CloseableHttpResponse httpResponse = null;
@@ -128,6 +129,7 @@ public class HttpUtils {
         httpPost.setConfig(requestConfig);
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");
+        httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
         CloseableHttpResponse httpResponse = null;
         try {
             httpPost.setEntity(new StringEntity(jsonStr));

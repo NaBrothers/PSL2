@@ -50,8 +50,10 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
         SimpleMessage reply = new SimpleMessage();
         reply.setSupportImageMode(false);
         try {
-            String retStr = HttpUtils.doGet("http://47.93.214.136/chatgpt-api.php?keys=" + URLEncoder.encode(message, "UTF-8"));
-            String content = JSONObject.parseObject(retStr).getJSONObject("data").getString("html");
+            JSONObject params = new JSONObject();
+            params.put("message", message);
+            String retStr = HttpUtils.doPost("https://api.devcto.com/v1/service/chatgpt/search", params.toJSONString());
+            String content = JSONObject.parseObject(retStr).getJSONObject("data").getString("content");
             content = content.replaceAll("\n\n", "\n");
             reply.setData(content);
         } catch (Exception ignore) {
