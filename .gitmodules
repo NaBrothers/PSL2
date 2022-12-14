@@ -3,4 +3,4 @@
 	url = https://github.com/Mrs4s/go-cqhttp.git
 [submodule "proxy_pool"]
 	path = proxy_pool
-	url = ./proxy_pool
+	url = https://github.com/jhao104/proxy_pool.git
