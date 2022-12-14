@@ -80,6 +80,8 @@ public class HttpUtils {
         httpPost.setConfig(requestConfig);
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");
+        httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36 Edg/85.0.564.41");
+        httpPost.setHeader("Accept-Encoding", "gzip, deflate, br");
         CloseableHttpResponse httpResponse = null;
         try {
             httpPost.setEntity(new StringEntity(jsonStr));

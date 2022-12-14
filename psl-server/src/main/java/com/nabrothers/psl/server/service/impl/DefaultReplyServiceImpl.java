@@ -6,11 +6,13 @@ import com.nabrothers.psl.sdk.message.Message;
 import com.nabrothers.psl.sdk.message.SimpleMessage;
 import com.nabrothers.psl.server.service.DefaultReplyService;
 import com.nabrothers.psl.server.utils.HttpUtils;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 
 @Component
+@Log4j2
 public class DefaultReplyServiceImpl implements DefaultReplyService {
 
 //    @Override
@@ -50,14 +52,13 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
         SimpleMessage reply = new SimpleMessage();
         reply.setSupportImageMode(false);
         try {
-            JSONObject params = new JSONObject();
-            params.put("message", message);
-            String retStr = HttpUtils.doPost("https://api.devcto.com/v1/service/chatgpt/search", params.toJSONString());
-            String content = JSONObject.parseObject(retStr).getJSONObject("data").getString("content");
+            String retStr = HttpUtils.doGetWithProxy("http://47.93.214.136/chatgpt-api.php?keys=" + URLEncoder.encode(message, "UTF-8"));
+            String content = JSONObject.parseObject(retStr).getJSONObject("data").getString("html");
             content = content.replaceAll("\n\n", "\n");
             reply.setData(content);
-        } catch (Exception ignore) {
-
+        } catch (Exception e) {
+            log.error(e);
+            reply.setData("啊哦，出错了");
         } finally {
             return reply;
         }
