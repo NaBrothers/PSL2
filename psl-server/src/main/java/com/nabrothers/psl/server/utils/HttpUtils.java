@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.server.config.GlobalConfig;
-import javafx.util.Pair;
+import com.sun.tools.javac.util.Pair;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -140,7 +140,7 @@ public class HttpUtils {
         httpGet.setHeader("Content-type", "application/json");
         httpGet.setHeader("DataEncoding", "UTF-8");
         httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
-        HttpHost proxy = new HttpHost(ipPort.getKey(), ipPort.getValue());
+        HttpHost proxy = new HttpHost(ipPort.fst, ipPort.snd);
         RequestConfig requestConfig = RequestConfig.custom()
                 .setProxy(proxy)
                 .setConnectTimeout(3000)
