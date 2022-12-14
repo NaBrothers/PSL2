@@ -4,8 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.server.config.GlobalConfig;
-import com.sun.tools.javac.util.Pair;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.client.ClientProtocolException;
@@ -140,7 +141,7 @@ public class HttpUtils {
         httpGet.setHeader("Content-type", "application/json");
         httpGet.setHeader("DataEncoding", "UTF-8");
         httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
-        HttpHost proxy = new HttpHost(ipPort.fst, ipPort.snd);
+        HttpHost proxy = new HttpHost(ipPort.getKey(), ipPort.getValue());
         RequestConfig requestConfig = RequestConfig.custom()
                 .setProxy(proxy)
                 .setConnectTimeout(3000)
@@ -233,7 +234,7 @@ public class HttpUtils {
             }
             String proxyStr = JSONObject.parseObject(retStr).getString("proxy");
             String[] ipPort = proxyStr.split(":");
-            proxy = new Pair(ipPort[0], Integer.valueOf(ipPort[1]));
+            proxy = new ImmutablePair<>(ipPort[0], Integer.valueOf(ipPort[1]));
         } catch (Exception e) {
             log.warn("Get proxy error", e);
         }
