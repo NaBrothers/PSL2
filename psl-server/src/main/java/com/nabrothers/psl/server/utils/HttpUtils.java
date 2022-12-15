@@ -103,24 +103,24 @@ public class HttpUtils {
             return EntityUtils.toString(entity);
         } catch (ClientProtocolException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error(e);
         } catch (IOException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error(e);
         } finally {
             if (httpResponse != null) {
                 try {
                     httpResponse.close();
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    log.error(e);
                 }
             }
             if (null != httpClient) {
                 try {
                     httpClient.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error(e);
                 }
             }
         }
@@ -170,24 +170,24 @@ public class HttpUtils {
                 return EntityUtils.toString(entity);
             } catch (ClientProtocolException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error(e);
             } finally {
                 if (httpResponse != null) {
                     try {
                         httpResponse.close();
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        log.error(e);
                     }
                 }
                 if (null != httpClient) {
                     try {
                         httpClient.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(e);
                     }
                 }
             }
@@ -215,22 +215,22 @@ public class HttpUtils {
             String result = EntityUtils.toString(entity);
             return result;
         } catch (ClientProtocolException e) {
-            e.printStackTrace();
+            log.error(e);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         } finally {
             if (httpResponse != null) {
                 try {
                     httpResponse.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error(e);
                 }
             }
             if (null != httpClient) {
                 try {
                     httpClient.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error(e);
                 }
             }
         }
