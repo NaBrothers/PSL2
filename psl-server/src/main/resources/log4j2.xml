@@ -1,13 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
-    <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
+<configuration status="trace">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
             <PatternLayout pattern="%d{HH:mm:ss} [%-4level] %logger{36} - %msg%n"/>
         </Console>
-    </Appenders>
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="Console"/>
-        </Root>
-    </Loggers>
-</Configuration>
+        <!--异步磁盘appender，默认按天&按512M文件大小切分日志，默认最多保留30个日志文件，默认为非阻塞模式-->
+        <XMDFile name="XMDFileAppender" fileName="logs/app.log"  xmdFilePath="/data/applogs/">
+        </XMDFile>
+
+        <!--ERROR日志、WARN日志单独输出到一个文件-->
+        <XMDFile name="ERROR-LOG" fileName="logs/error.log"  xmdFilePath="/data/applogs/">
+            <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+        </XMDFile>
+        <XMDFile name="WARN-LOG" fileName="logs/warn.log"  xmdFilePath="/data/applogs/">
+            <Filters>
+                <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </XMDFile>
+        <XMDFile ></XMDFile>
+    </appenders>
+
+    <loggers>
+        <root level="info">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="XMDFileAppender"/>
+            <appender-ref ref="ERROR-LOG"/>
+            <appender-ref ref="WARN-LOG"/>
+        </root>
+    </loggers>
+</configuration>
