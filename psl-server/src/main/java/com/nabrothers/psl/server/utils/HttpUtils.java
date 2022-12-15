@@ -28,7 +28,7 @@ public class HttpUtils {
 
     private static final String url = "http://127.0.0.1:5700/";
 
-    private static final String proxy_url = "http://127.0.0.1:5010/get";
+    private static final String proxy_url = "http://127.0.0.1:5010/";
 
     @Nullable
     public static JSONObject doGet(String cmd, JSONObject param) {
@@ -132,51 +132,63 @@ public class HttpUtils {
         if (!GlobalConfig.ENABLE_PROXY) {
             return doGet(url);
         }
-        Pair<String, Integer> ipPort = getProxy();
-        if (ipPort == null) {
-            return doGet(url);
-        }
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
-        httpGet.setHeader("Content-type", "application/json");
-        httpGet.setHeader("DataEncoding", "UTF-8");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
-        HttpHost proxy = new HttpHost(ipPort.getKey(), ipPort.getValue());
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setProxy(proxy)
-                .setConnectTimeout(3000)
-                .setConnectionRequestTimeout(35000)
-                .setSocketTimeout(60000)
-                .build();
-        httpGet.setConfig(requestConfig);
-        CloseableHttpResponse httpResponse = null;
-        try {
-            httpResponse = httpClient.execute(httpGet);
-            HttpEntity entity = httpResponse.getEntity();
-            if(httpResponse.getStatusLine().getStatusCode() != 200){
-                return null;
+        int tryCount = 0;
+        tryLoop:
+        while (tryCount < 3) {
+            tryCount++;
+            Pair<String, Integer> ipPort = getProxy();
+            if (ipPort == null) {
+                return doGet(url);
             }
-            return EntityUtils.toString(entity);
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            if (httpResponse != null) {
-                try {
-                    httpResponse.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(url);
+            httpGet.setHeader("Content-type", "application/json");
+            httpGet.setHeader("DataEncoding", "UTF-8");
+            httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
+            HttpHost proxy = new HttpHost(ipPort.getKey(), ipPort.getValue());
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .setConnectTimeout(3000)
+                    .setConnectionRequestTimeout(35000)
+                    .setSocketTimeout(60000)
+                    .build();
+            httpGet.setConfig(requestConfig);
+            CloseableHttpResponse httpResponse = null;
+            try {
+                httpResponse = httpClient.execute(httpGet);
+                HttpEntity entity = httpResponse.getEntity();
+                if (httpResponse.getStatusLine().getStatusCode() != 200) {
+                    if (httpResponse.getStatusLine().getStatusCode() == 404) {
+                        boolean res = removeProxy(ipPort);
+                        if (res) {
+                            log.info("代理 {}:{} 访问失败，已被删除", ipPort.getKey(), ipPort.getValue());
+                        }
+                        continue tryLoop;
+                    }
+                    return null;
                 }
-            }
-            if (null != httpClient) {
-                try {
-                    httpClient.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                return EntityUtils.toString(entity);
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } finally {
+                if (httpResponse != null) {
+                    try {
+                        httpResponse.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                if (null != httpClient) {
+                    try {
+                        httpClient.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -228,7 +240,7 @@ public class HttpUtils {
     private static Pair<String, Integer> getProxy() {
         Pair<String, Integer> proxy = null;
         try {
-            String retStr = doGet(proxy_url);
+            String retStr = doGet(proxy_url + "get");
             if (retStr == null) {
                 return null;
             }
@@ -239,5 +251,19 @@ public class HttpUtils {
             log.warn("Get proxy error", e);
         }
         return proxy;
+    }
+
+    private static boolean removeProxy(Pair<String, Integer> proxy) {
+        try {
+            String retStr = doGet(proxy_url + "delete?proxy=" + proxy.getKey() + ":" + proxy.getValue());
+            if (retStr == null) {
+                return false;
+            }
+            int src = JSONObject.parseObject(retStr).getIntValue("src");
+            return src == 1;
+        } catch (Exception e) {
+            log.warn("Remove proxy error", e);
+        }
+        return false;
     }
 }
