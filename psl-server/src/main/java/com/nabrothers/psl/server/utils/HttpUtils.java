@@ -14,6 +14,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -159,10 +160,7 @@ public class HttpUtils {
                 HttpEntity entity = httpResponse.getEntity();
                 if (httpResponse.getStatusLine().getStatusCode() != 200) {
                     if (httpResponse.getStatusLine().getStatusCode() == 404) {
-                        boolean res = removeProxy(ipPort);
-                        if (res) {
-                            log.info("代理 {}:{} 访问失败，已被删除", ipPort.getKey(), ipPort.getValue());
-                        }
+                        removeProxy(ipPort);
                         continue tryLoop;
                     }
                     return null;
@@ -171,6 +169,10 @@ public class HttpUtils {
             } catch (ClientProtocolException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
+            } catch (ConnectTimeoutException e) {
+                log.error(e);
+                removeProxy(ipPort);
+                continue tryLoop;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 log.error(e);
@@ -260,6 +262,9 @@ public class HttpUtils {
                 return false;
             }
             int src = JSONObject.parseObject(retStr).getIntValue("src");
+            if (src == 1) {
+                log.info("代理 {}:{} 访问失败，已被删除", proxy.getKey(), proxy.getValue());
+            }
             return src == 1;
         } catch (Exception e) {
             log.warn("Remove proxy error", e);
