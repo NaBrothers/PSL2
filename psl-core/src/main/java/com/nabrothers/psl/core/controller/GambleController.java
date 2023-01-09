@@ -9,6 +9,7 @@ import com.nabrothers.psl.core.dto.BetRecordDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.core.exception.TransactionException;
 import com.nabrothers.psl.core.service.TransactionService;
+import com.nabrothers.psl.core.utils.Config;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
@@ -65,13 +66,13 @@ public class GambleController {
     @Scheduled(cron = "0 0 12 * * ?")
     public void dailyReward() {
         long amount = 100000L;
-        messageService.sendGroupMessage(383250309L, "今日菠菜资金 $" + amount + " 已到账，请查收");
         List<UserDTO> users = userDAO.queryAll();
         for (UserDTO user : users) {
             try {
                 transactionService.add(user.getUserId(), amount);
             } catch (Exception ignore) {}
         }
+        messageService.sendGroupMessage(Config.DEFAULT_GROUP_ID, "今日菠菜资金 $" + amount + " 已到账，请查收");
     }
 
     @Handler(info = "当前可以赌的比赛")
@@ -265,7 +266,7 @@ public class GambleController {
                             } else {
                                 sb.append("再接再厉");
                             }
-                            messageService.sendGroupMessage(383250309L, String.format(CQCode.AT_PATTERN, record.getUserId()) + sb.toString());
+                            messageService.sendGroupMessage(Config.DEFAULT_GROUP_ID, String.format(CQCode.AT_PATTERN, record.getUserId()) + sb.toString());
                         }
                     }
 
