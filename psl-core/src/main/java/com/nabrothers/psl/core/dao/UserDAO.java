@@ -10,7 +10,7 @@ import java.util.List;
 
 @Component
 public interface UserDAO {
-    @Insert("insert into `User` (userId,name) values (#{userId},#{name})")
+    @Insert("insert into `User` (userId,name,money) values (#{userId},#{name},#{money})")
     void insert(UserDTO userDTO);
 
     @Select("select * from `User` where id = #{id}")
