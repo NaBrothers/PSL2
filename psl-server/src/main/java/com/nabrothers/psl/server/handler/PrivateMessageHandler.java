@@ -30,6 +30,9 @@ public class PrivateMessageHandler extends MessageHandler{
         Message message = null;
         try {
             Object result = context.handle(messageRequest.getMessage());
+            if (result == null) {
+                return;
+            }
             if (result instanceof Message) {
                 message = (Message) result;
             } else {
@@ -39,6 +42,9 @@ public class PrivateMessageHandler extends MessageHandler{
             log.error(e);
             message = new TextMessage(e.getMessage());
         } finally {
+            if (message == null) {
+                return;
+            }
             String response = "";
             if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
                 if (message instanceof CQCodeMessage) {

@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 
 @Component
 @Log4j2
-public class GroupMessageHandler extends MessageHandler{
+public class GroupMessageHandler extends MessageHandler {
     private static final String LOG_SYNTAX = "收到群 %s(%d) 内 %s(%d) 的消息: %s";
 
     @Resource
@@ -34,42 +34,46 @@ public class GroupMessageHandler extends MessageHandler{
         log.info(String.format(LOG_SYNTAX, getGroupName(messageRequest.getGroup_id()), messageRequest.getGroup_id(), messageRequest.getSender().getCard(),
                 messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
 
-        if (messageRequest.isAt()) {
-            Message message = null;
-            try {
-                Object result = context.handle(messageRequest.getMessage());
-                if (result instanceof Message) {
-                    message = (Message) result;
+        Message message = null;
+        try {
+            Object result = context.handle(messageRequest.getMessage());
+            if (result == null) {
+                return;
+            }
+            if (result instanceof Message) {
+                message = (Message) result;
+            } else {
+                message = new SimpleMessage(result.toString());
+            }
+        } catch (Exception e) {
+            log.error(e);
+            message = new TextMessage(e.getMessage());
+        } finally {
+            if (message == null) {
+                return;
+            }
+            String response = "";
+            if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
+                if (message instanceof CQCodeMessage) {
+                    response = message.getMessage();
                 } else {
-                    message = new SimpleMessage(result.toString());
+                    String path = ImageUtils.toImage(message.getMessage());
+                    response = String.format(CQCode.IMAGE_PATTERN, path);
                 }
-            } catch (Exception e) {
-                log.error(e);
-                message = new TextMessage(e.getMessage());
-            } finally {
-                String response = "";
-                if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
-                    if (message instanceof CQCodeMessage) {
-                        response = message.getMessage();
-                    } else {
-                        String path = ImageUtils.toImage(message.getMessage());
-                        response = String.format(CQCode.IMAGE_PATTERN, path);
-                    }
+            } else {
+                response = message.getRawMessage();
+            }
+
+            if (message.isSupportAt()) {
+                if (message instanceof SimpleMessage) {
+                    response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + response;
                 } else {
-                    response = message.getRawMessage();
+                    response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
                 }
+            }
 
-                if (message.isSupportAt()) {
-                    if (message instanceof SimpleMessage) {
-                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + response;
-                    } else {
-                        response = String.format(CQCode.AT_PATTERN, messageRequest.getSender().getUser_id()) + "\n" + response;
-                    }
-                }
-
-                if (StringUtils.isNotEmpty(response)) {
-                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
-                }
+            if (StringUtils.isNotEmpty(response)) {
+                Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
             }
         }
     }

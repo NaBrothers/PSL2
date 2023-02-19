@@ -6,5 +6,4 @@ import lombok.Data;
 public class GroupMessageRequest extends MessageRequest {
     private Long group_id;
     private Long message_seq;
-    private boolean isAt;
 }

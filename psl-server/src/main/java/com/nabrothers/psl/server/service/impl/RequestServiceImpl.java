@@ -80,6 +80,8 @@ public class RequestServiceImpl implements RequestService {
             case MESSAGE_PRIVATE:
                 PrivateMessageRequest privateMessageRequest = param.toJavaObject(PrivateMessageRequest.class);
                 privateMessageRequest.setMessage(decode(privateMessageRequest.getMessage()));
+                privateMessageRequest.setAt(true);
+                SessionContext.get().setAt(true);
                 handlers.get(EventType.PRIVATE_MESSAGE).doHandle(privateMessageRequest);
                 break;
             case MESSAGE_GROUP:
@@ -90,6 +92,7 @@ public class RequestServiceImpl implements RequestService {
                     groupMessageRequest.setAt(true);
                     SessionContext.get().setMessage(message);
                     SessionContext.get().setGroup(accountManager.getGroup(groupMessageRequest.getGroup_id()));
+                    SessionContext.get().setAt(true);
                 }
                 groupMessageRequest.setMessage(decode(groupMessageRequest.getMessage()));
                 handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);

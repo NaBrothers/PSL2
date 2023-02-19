@@ -5,6 +5,7 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.sdk.context.HandlerInterceptor;
 import com.nabrothers.psl.sdk.context.SessionContext;
+import com.nabrothers.psl.sdk.enums.TriggerType;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.dto.Plugin;
 import com.nabrothers.psl.server.service.DefaultReplyService;
@@ -92,6 +93,7 @@ public class HandlerContext {
         private String info;
         private String command;
         private boolean hidden;
+        private TriggerType trigger;
         private Plugin plugin;
 
         public Method getMethod() {
@@ -104,6 +106,10 @@ public class HandlerContext {
 
         public String getCommand() {
             return command;
+        }
+
+        public TriggerType getTrigger() {
+            return trigger;
         }
 
         public boolean isHidden() {
@@ -202,6 +208,7 @@ public class HandlerContext {
             handlerMethod.command = annotation.command();
             handlerMethod.info = annotation.info();
             handlerMethod.hidden = method.isAnnotationPresent(Hidden.class) || method.getDeclaringClass().isAnnotationPresent(Hidden.class);
+            handlerMethod.trigger = annotation.trigger();
             handlerMethod.plugin = plugin.get();
             return;
         }
@@ -303,7 +310,11 @@ public class HandlerContext {
     }
 
     private Object invoke(Node node, List<String> args) {
+        boolean isAt = SessionContext.get().isAt();
         if (node.handlers.isEmpty()) {
+            if (!isAt) {
+                return null;
+            }
             if (GlobalConfig.ENABLE_DEFAULT_REPLY) {
                 DefaultReplyService defaultReplyService = ApplicationContextUtils.getBean(DefaultReplyServiceImpl.class);
                 return defaultReplyService.getReply(cmd.get());
@@ -312,11 +323,17 @@ public class HandlerContext {
             }
         }
         HandlerMethod handlerMethod = node.handlers.get(args.size());
-        if (handlerMethod == null) {
-            throw new RuntimeException(String.format("指令 [%s] 需要 (%s) 个参数\n请输入 [帮助 %s] 查看指令格式",
-                    node.command,
-                    Joiner.on("/").join(node.handlers.keySet()),
-                    node.command.split(" ")[0]));
+        if (isAt) {
+            if (handlerMethod == null ) {
+                throw new RuntimeException(String.format("指令 [%s] 需要 (%s) 个参数\n请输入 [帮助 %s] 查看指令格式",
+                        node.command,
+                        Joiner.on("/").join(node.handlers.keySet()),
+                        node.command.split(" ")[0]));
+            }
+        } else {
+            if (handlerMethod == null || handlerMethod.getTrigger().equals(TriggerType.AT_ONLY)) {
+                return null;
+            }
         }
         return _invoke(handlerMethod, args);
     }

@@ -13,4 +13,5 @@ public class MessageRequest extends CQHttpRequest {
     private String sub_type;
     private Long user_id;
     private Long font;
+    private boolean isAt;
 }

@@ -13,4 +13,5 @@ public class Session {
     private String message;
     private MessageType messageType;
     private GroupDTO group;
+    private boolean isAt;
 }
