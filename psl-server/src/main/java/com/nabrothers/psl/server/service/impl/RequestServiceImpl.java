@@ -91,9 +91,9 @@ public class RequestServiceImpl implements RequestService {
                     groupMessageRequest.setMessage(message);
                     groupMessageRequest.setAt(true);
                     SessionContext.get().setMessage(message);
-                    SessionContext.get().setGroup(accountManager.getGroup(groupMessageRequest.getGroup_id()));
                     SessionContext.get().setAt(true);
                 }
+                SessionContext.get().setGroup(accountManager.getGroup(groupMessageRequest.getGroup_id()));
                 groupMessageRequest.setMessage(decode(groupMessageRequest.getMessage()));
                 handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);
                 break;

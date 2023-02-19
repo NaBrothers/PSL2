@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.sdk.context.HandlerInterceptor;
+import com.nabrothers.psl.sdk.context.MessageListener;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.enums.TriggerType;
 import com.nabrothers.psl.server.config.GlobalConfig;
@@ -127,6 +128,8 @@ public class HandlerContext {
 
     private Map<String, List<HandlerInterceptor>> interceptors = new HashMap<>();
 
+    private List<MessageListener> listeners = new ArrayList<>();
+
     public static HandlerContext getInstance() {
         return instance;
     }
@@ -144,6 +147,30 @@ public class HandlerContext {
             if (reflections.getConfiguration().getUrls().isEmpty()) {
                 throw new ClassNotFoundException(name);
             }
+            // 处理监听器
+            Set<Class<? extends MessageListener>> listeners = reflections.getSubTypesOf(MessageListener.class);
+            this.listeners.addAll(
+                    listeners.stream()
+                            .filter(clazz -> clazz.getPackage().getName().startsWith(name))
+                            .map(clazz -> {
+                                MessageListener obj = null;
+                                try {
+                                    obj = ApplicationContextUtils.getBean(clazz);
+                                } catch (Exception e) {
+                                    log.warn("找不到Bean，创建新实例: " + clazz);
+                                    try {
+                                        obj = clazz.newInstance();
+                                    } catch (Exception e1) {
+                                        log.error(e);
+                                        return null;
+                                    }
+                                }
+                                return obj;
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            );
+
             // 处理拦截器
             Set<Class<? extends HandlerInterceptor>> interceptors = reflections.getSubTypesOf(HandlerInterceptor.class);
             this.interceptors.put(name, interceptors.stream()
@@ -228,6 +255,20 @@ public class HandlerContext {
     }
 
     public Object handle(String command) {
+        if (SessionContext.get() != null) {
+            listeners.parallelStream().forEach(
+                    listener -> {
+                        try {
+                            listener.listen(SessionContext.get());
+                        } catch (Exception e) {
+                            throw new RuntimeException("监听器异常:\n" +
+                                    e.getMessage() + "\n" +
+                                    "[异常堆栈]\n" +
+                                    getStackTrace(e));
+                        }
+                    }
+            );
+        }
         cmd.set(command);
         List<String> commands = Arrays.asList(command.split(" "));
         Object result = _handle(head, commands);
@@ -310,7 +351,10 @@ public class HandlerContext {
     }
 
     private Object invoke(Node node, List<String> args) {
-        boolean isAt = SessionContext.get().isAt();
+        boolean isAt = true;
+        if (SessionContext.get() != null) {
+            isAt = SessionContext.get().isAt();
+        }
         if (node.handlers.isEmpty()) {
             if (!isAt) {
                 return null;
