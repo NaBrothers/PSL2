@@ -5,6 +5,7 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.sdk.context.HandlerInterceptor;
 import com.nabrothers.psl.sdk.context.MessageListener;
+import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.enums.TriggerType;
 import com.nabrothers.psl.server.config.GlobalConfig;
@@ -255,12 +256,13 @@ public class HandlerContext {
     }
 
     public Object handle(String command) {
-        if (SessionContext.get() != null) {
+        Session session =  SessionContext.get();
+        if (session != null) {
             new Thread(() ->
                     listeners.parallelStream().forEach(
                             listener -> {
                                 try {
-                                    listener.listen(SessionContext.get());
+                                    listener.listen(session);
                                 } catch (Exception e) {
                                     throw new RuntimeException("监听器异常:\n" +
                                             e.getMessage() + "\n" +

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.sdk.context.MessageListener;
 import com.nabrothers.psl.sdk.context.Session;
+import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class KeywordListener implements MessageListener {
         JSONObject obj = JSON.parseObject(value);
         for (String keyword : obj.keySet()) {
             if (message.contains(keyword)) {
-                messageService.send(session, obj.getString(keyword));
+                messageService.send(session, String.format(CQCode.AT_PATTERN, session.getSender().getId()) + obj.getString(keyword));
             }
         }
     }
