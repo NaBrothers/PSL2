@@ -256,18 +256,19 @@ public class HandlerContext {
 
     public Object handle(String command) {
         if (SessionContext.get() != null) {
-            listeners.parallelStream().forEach(
-                    listener -> {
-                        try {
-                            listener.listen(SessionContext.get());
-                        } catch (Exception e) {
-                            throw new RuntimeException("监听器异常:\n" +
-                                    e.getMessage() + "\n" +
-                                    "[异常堆栈]\n" +
-                                    getStackTrace(e));
-                        }
-                    }
-            );
+            new Thread(() ->
+                    listeners.parallelStream().forEach(
+                            listener -> {
+                                try {
+                                    listener.listen(SessionContext.get());
+                                } catch (Exception e) {
+                                    throw new RuntimeException("监听器异常:\n" +
+                                            e.getMessage() + "\n" +
+                                            "[异常堆栈]\n" +
+                                            getStackTrace(e));
+                                }
+                            }
+                    )).start();
         }
         cmd.set(command);
         List<String> commands = Arrays.asList(command.split(" "));
