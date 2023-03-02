@@ -23,6 +23,7 @@ import org.apache.http.util.EntityUtils;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Map;
 
 @Log4j2
 public class HttpUtils {
@@ -83,7 +84,6 @@ public class HttpUtils {
         }
         return resObj.getJSONObject("data");
     }
-
 
     @Nullable
     public static String doGet(String url) {
@@ -201,11 +201,13 @@ public class HttpUtils {
     public static String doPost(String url, String jsonStr) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(3000).setConnectionRequestTimeout(35000).setSocketTimeout(60000).build();
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(3000).setConnectionRequestTimeout(35000).setSocketTimeout(120000).build();
         httpPost.setConfig(requestConfig);
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");
         httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
+        String API_TOKEN = "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"; //temp
+        httpPost.setHeader("Authorization", "Bearer "+API_TOKEN); //temp
         CloseableHttpResponse httpResponse = null;
         try {
             httpPost.setEntity(new StringEntity(jsonStr));
