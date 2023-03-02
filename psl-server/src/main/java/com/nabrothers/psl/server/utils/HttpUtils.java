@@ -27,8 +27,10 @@ import javax.annotation.Nullable;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Arrays;
@@ -302,7 +304,7 @@ public class HttpUtils {
 
         RequestConfig requestConfig = RequestConfig.custom()
                 .setProxy(proxy)
-                .setConnectTimeout(3000)
+                .setConnectTimeout(10000)
                 .setConnectionRequestTimeout(35000)
                 .setSocketTimeout(120000)
                 .build();
@@ -380,40 +382,31 @@ public class HttpUtils {
         return false;
     }
 
-    public static CloseableHttpClient createSSLClientDefault(){
+    public static CloseableHttpClient createSSLClientDefault() {
+        SSLConnectionSocketFactory sslsf = null;
         try {
-            //SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-            // 在JSSE中，证书信任管理器类就是实现了接口X509TrustManager的类。我们可以自己实现该接口，让它信任我们指定的证书。
-            // 创建SSLContext对象，并使用我们指定的信任管理器初始化
-            //信任所有
-            X509TrustManager x509mgr = new X509TrustManager() {
-                //　　该方法检查客户端的证书，若不信任该证书则抛出异常
-                public void checkClientTrusted(X509Certificate[] xcs, String string) {
+            SSLContext ctx = SSLContext.getInstance("TLSv1.2");
+            X509TrustManager tm = new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain,
+                                               String authType) throws CertificateException {
                 }
-                // 　　该方法检查服务端的证书，若不信任该证书则抛出异常
-                public void checkServerTrusted(X509Certificate[] xcs, String string) {
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain,
+                                               String authType) throws CertificateException {
                 }
-                // 　返回受信任的X509证书数组。
+
+                @Override
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;
                 }
             };
-            SSLContext sslContext = SSLContext.getInstance("SSL");
-            sslContext.init(null, new TrustManager[] { x509mgr }, null);
-            SSLSessionContext sslsc = sslContext.getServerSessionContext();
-            sslsc.setSessionTimeout(0);
-            ////创建HttpsURLConnection对象，并设置其SSLSocketFactory对象
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            //  HttpsURLConnection对象就可以正常连接HTTPS了，无论其证书是否经权威机构的验证，只要实现了接口X509TrustManager的类MyX509TrustManager信任该证书。
-            return HttpClients.custom().setSSLSocketFactory(sslsf).build();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
+            ctx.init(null, new TrustManager[]{tm}, null);
+            sslsf = new SSLConnectionSocketFactory(ctx, new String[]{"SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"}, null, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
-        // 创建默认的httpClient实例.
-        return  HttpClients.createDefault();
+        return HttpClients.custom().setSSLSocketFactory(sslsf).build();
     }
 }
