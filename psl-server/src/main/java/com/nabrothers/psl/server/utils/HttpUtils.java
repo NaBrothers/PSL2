@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
@@ -287,16 +288,20 @@ public class HttpUtils {
     }
 
     @Nullable
-    public static String doPostWithProxy(String url, JSONObject body, JSONObject header) throws IOException {
-        String jsonStr = body.toJSONString();
+    public static String doPostWithProxy(String url, JSONObject body, JSONObject header) {
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
-        HttpHost proxy = new HttpHost("172.245.226.43", 8899);
+        String proxyUrl = "http://172.245.226.43:8848/post";
+        HttpPost httpPost = new HttpPost(proxyUrl);
+
+        JSONObject request = new JSONObject();
+        request.put("url", url);
+        request.put("header", header);
+        request.put("body", body);
+        String jsonStr = request.toJSONString();
 
         RequestConfig requestConfig = RequestConfig.custom()
-                .setProxy(proxy)
-                .setConnectTimeout(10000)
+                .setConnectTimeout(3000)
                 .setConnectionRequestTimeout(35000)
                 .setSocketTimeout(120000)
                 .build();
@@ -304,11 +309,6 @@ public class HttpUtils {
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");
         httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
-        if (header != null) {
-            for (Map.Entry<String, Object> entry : header.entrySet()) {
-                httpPost.setHeader(entry.getKey(), entry.getValue().toString());
-            }
-        }
 
         CloseableHttpResponse httpResponse = null;
         try {
@@ -318,9 +318,18 @@ public class HttpUtils {
                 return null;
             }
             HttpEntity entity = httpResponse.getEntity();
-            String result = EntityUtils.toString(entity);
-            return result;
+            String response = EntityUtils.toString(entity);
+            JSONObject result = JSONObject.parseObject(response);
+            if (result.getIntValue("code") != 200) {
+                return null;
+            }
+            if (StringUtils.isNotEmpty(result.getString("message"))) {
+                throw new IOException(result.getString("message"));
+            }
+            return result.getString("data");
         } catch (ClientProtocolException e) {
+            log.error(e);
+        } catch (IOException e) {
             log.error(e);
         } finally {
             if (httpResponse != null) {
