@@ -288,7 +288,7 @@ public class HttpUtils {
     }
 
     @Nullable
-    public static String doPostWithProxy(String url, JSONObject body, JSONObject header) {
+    public static String doPostWithProxy(String url, JSONObject body, JSONObject header) throws IOException {
         String jsonStr = body.toJSONString();
 
         CloseableHttpClient httpClient = HttpClients.custom()
