@@ -15,26 +15,17 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import javax.annotation.Nullable;
-import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.security.GeneralSecurityException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -298,7 +289,7 @@ public class HttpUtils {
     public static String doPostWithProxy(String url, JSONObject body, JSONObject header) throws IOException {
         String jsonStr = body.toJSONString();
 
-        CloseableHttpClient httpClient = createSSLClientDefault();
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
         HttpHost proxy = new HttpHost("172.245.226.43", 8899);
 
@@ -382,31 +373,4 @@ public class HttpUtils {
         return false;
     }
 
-    public static CloseableHttpClient createSSLClientDefault() {
-        SSLConnectionSocketFactory sslsf = null;
-        try {
-            SSLContext ctx = SSLContext.getInstance("TLSv1.2");
-            X509TrustManager tm = new X509TrustManager() {
-                @Override
-                public void checkClientTrusted(X509Certificate[] chain,
-                                               String authType) throws CertificateException {
-                }
-
-                @Override
-                public void checkServerTrusted(X509Certificate[] chain,
-                                               String authType) throws CertificateException {
-                }
-
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-            };
-            ctx.init(null, new TrustManager[]{tm}, null);
-            sslsf = new SSLConnectionSocketFactory(ctx, new String[]{"SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"}, null, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
-        return HttpClients.custom().setSSLSocketFactory(sslsf).build();
-    }
 }
