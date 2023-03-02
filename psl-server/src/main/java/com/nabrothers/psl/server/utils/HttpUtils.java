@@ -72,50 +72,6 @@ public class HttpUtils {
             "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727; TheWorld)"
     );
 
-    static {
-        disableSslVerification();
-    }
-
-    private static void disableSslVerification() {
-        try
-        {
-            // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-                @Override
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                @Override
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-                @Override
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-            };
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-            // Create all-trusting host name verifier
-            HostnameVerifier allHostsValid = new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            };
-
-            // Install the all-trusting host verifier
-            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-        } catch (NoSuchAlgorithmException e) {
-            log.error(e);
-        } catch (KeyManagementException e) {
-            log.error(e);
-        }
-    }
-
     @Nullable
     public static JSONObject doGet(String cmd, JSONObject param) {
         JSONObject resObj = getResp(cmd, param);
@@ -339,9 +295,7 @@ public class HttpUtils {
     public static String doPostWithProxy(String url, JSONObject body, JSONObject header) throws IOException {
         String jsonStr = body.toJSONString();
 
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE)
-                .build();
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
         HttpHost proxy = new HttpHost("172.245.226.43", 8899);
 
