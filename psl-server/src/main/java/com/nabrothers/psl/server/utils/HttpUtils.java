@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
-=======
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +106,7 @@ public class HttpUtils {
     public static JSONObject doPost(String cmd, JSONObject param) {
         StringBuilder sb = new StringBuilder(url);
         sb.append(cmd);
-        String res = doPost(sb.toString(), param.toJSONString());
+        String res = doPost(sb.toString(), param, null);
         if (res == null) {
             log.error("HTTP_POST_ERROR: " + sb.toString());
             return null;
@@ -233,7 +232,9 @@ public class HttpUtils {
     }
 
     @Nullable
-    public static String doPost(String url, String jsonStr) {
+    public static String doPost(String url, JSONObject body, JSONObject header) {
+        String jsonStr = body.toJSONString();
+
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
         RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(3000).setConnectionRequestTimeout(35000).setSocketTimeout(120000).build();
@@ -241,8 +242,12 @@ public class HttpUtils {
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");
         httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
-        String API_TOKEN = "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"; //temp
-        httpPost.setHeader("Authorization", "Bearer "+API_TOKEN); //temp
+        if (header != null) {
+            for (Map.Entry<String, Object> entry : header.entrySet()) {
+                httpPost.setHeader(entry.getKey(), entry.getValue().toString());
+            }
+        }
+
         CloseableHttpResponse httpResponse = null;
         try {
             httpPost.setEntity(new StringEntity(jsonStr));

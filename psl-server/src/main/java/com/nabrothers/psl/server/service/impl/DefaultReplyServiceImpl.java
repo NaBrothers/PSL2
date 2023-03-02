@@ -6,6 +6,7 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.Message;
 import com.nabrothers.psl.sdk.message.SimpleMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
+import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.server.service.DefaultReplyService;
 import com.nabrothers.psl.server.utils.HttpUtils;
 import lombok.extern.log4j.Log4j2;
@@ -13,6 +14,7 @@ import lombok.extern.log4j.Log4j2;
 import org.eclipse.jetty.util.StringUtil;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
@@ -21,6 +23,9 @@ import java.util.Random;
 @Component
 @Log4j2
 public class DefaultReplyServiceImpl implements DefaultReplyService {
+
+    @Resource
+    private CacheService cacheService;
 
 //    @Override
 //    public Message getReply(String message) {
@@ -73,7 +78,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             JSONArray messages = new JSONArray();
             JSONObject oneMessage = new JSONObject();
             oneMessage.put("role", "user");
-            oneMessage.put("content",message);
+            oneMessage.put("content", URLEncoder.encode(message, "UTF-8"));
             messages.add(oneMessage);
             jsonObj.put("messages", messages);
             // jsonObj.put("temperature", 0.5);
@@ -82,8 +87,12 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             // jsonObj.put("presence_penalty", 0.6);
             //jsonObj.put("echo", true);
             //jsonObj.put("stop", Arrays.asList("$Human:", "$懂哥:"));
-            String jsonStr = JSONObject.toJSONString(jsonObj);
-            String retStr = HttpUtils.doPost("https://api.openai.com/v1/chat/completions", jsonStr);
+
+            JSONObject header = new JSONObject();
+            String API_TOKEN = cacheService.get("config", "openapi_token");
+            header.put("Authorization", "Bearer " + API_TOKEN);
+
+            String retStr = HttpUtils.doPost("https://api.openai.com/v1/chat/completions", jsonObj, header);
             JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
             JSONObject choice = choices.getJSONObject(0);
             JSONObject retMsg = choice.getJSONObject("message");
@@ -93,7 +102,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
         } catch (Exception e) {
             log.error(e);
             reply.setData("啊哦，出错了");
-        } 
+        }
         return reply;
     }
 }
