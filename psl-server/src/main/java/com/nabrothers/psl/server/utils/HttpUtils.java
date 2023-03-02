@@ -238,7 +238,68 @@ public class HttpUtils {
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(3000).setConnectionRequestTimeout(35000).setSocketTimeout(120000).build();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(3000)
+                .setConnectionRequestTimeout(35000)
+                .setSocketTimeout(120000)
+                .build();
+        httpPost.setConfig(requestConfig);
+        httpPost.setHeader("Content-type", "application/json");
+        httpPost.setHeader("DataEncoding", "UTF-8");
+        httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
+        if (header != null) {
+            for (Map.Entry<String, Object> entry : header.entrySet()) {
+                httpPost.setHeader(entry.getKey(), entry.getValue().toString());
+            }
+        }
+
+        CloseableHttpResponse httpResponse = null;
+        try {
+            httpPost.setEntity(new StringEntity(jsonStr, ContentType.APPLICATION_JSON));
+            httpResponse = httpClient.execute(httpPost);
+            if(httpResponse.getStatusLine().getStatusCode() != 200){
+                return null;
+            }
+            HttpEntity entity = httpResponse.getEntity();
+            String result = EntityUtils.toString(entity);
+            return result;
+        } catch (ClientProtocolException e) {
+            log.error(e);
+        } catch (IOException e) {
+            log.error(e);
+        } finally {
+            if (httpResponse != null) {
+                try {
+                    httpResponse.close();
+                } catch (IOException e) {
+                    log.error(e);
+                }
+            }
+            if (null != httpClient) {
+                try {
+                    httpClient.close();
+                } catch (IOException e) {
+                    log.error(e);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static String doPostWithProxy(String url, JSONObject body, JSONObject header) {
+        String jsonStr = body.toJSONString();
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        HttpHost proxy = new HttpHost("172.245.226.43", 8899);
+
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setProxy(proxy)
+                .setConnectTimeout(3000)
+                .setConnectionRequestTimeout(35000)
+                .setSocketTimeout(120000)
+                .build();
         httpPost.setConfig(requestConfig);
         httpPost.setHeader("Content-type", "application/json");
         httpPost.setHeader("DataEncoding", "UTF-8");

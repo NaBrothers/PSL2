@@ -92,7 +92,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             String API_TOKEN = cacheService.get("config", "openai_token");
             header.put("Authorization", "Bearer " + API_TOKEN);
 
-            String retStr = HttpUtils.doPost("https://api.openai.com/v1/chat/completions", jsonObj, header);
+            String retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
             JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
             JSONObject choice = choices.getJSONObject(0);
             JSONObject retMsg = choice.getJSONObject("message");
