@@ -17,6 +17,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -290,7 +291,9 @@ public class HttpUtils {
     public static String doPostWithProxy(String url, JSONObject body, JSONObject header) {
         String jsonStr = body.toJSONString();
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE)
+                .build();
         HttpPost httpPost = new HttpPost(url);
         HttpHost proxy = new HttpHost("172.245.226.43", 8899);
 
