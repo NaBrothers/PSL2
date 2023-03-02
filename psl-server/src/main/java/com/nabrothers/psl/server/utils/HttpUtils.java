@@ -238,6 +238,7 @@ public class HttpUtils {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
         RequestConfig requestConfig = RequestConfig.custom()
+                .setStaleConnectionCheckEnabled(true)
                 .setConnectTimeout(3000)
                 .setConnectionRequestTimeout(35000)
                 .setSocketTimeout(120000)
