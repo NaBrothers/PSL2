@@ -15,6 +15,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -250,7 +251,7 @@ public class HttpUtils {
 
         CloseableHttpResponse httpResponse = null;
         try {
-            httpPost.setEntity(new StringEntity(jsonStr));
+            httpPost.setEntity(new StringEntity(jsonStr, ContentType.APPLICATION_JSON));
             httpResponse = httpClient.execute(httpPost);
             if(httpResponse.getStatusLine().getStatusCode() != 200){
                 return null;

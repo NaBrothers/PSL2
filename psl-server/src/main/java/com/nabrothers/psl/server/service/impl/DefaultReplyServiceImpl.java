@@ -78,7 +78,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             JSONArray messages = new JSONArray();
             JSONObject oneMessage = new JSONObject();
             oneMessage.put("role", "user");
-            oneMessage.put("content", URLEncoder.encode(message, "UTF-8"));
+            oneMessage.put("content", message);
             messages.add(oneMessage);
             jsonObj.put("messages", messages);
             // jsonObj.put("temperature", 0.5);
@@ -89,7 +89,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             //jsonObj.put("stop", Arrays.asList("$Human:", "$懂哥:"));
 
             JSONObject header = new JSONObject();
-            String API_TOKEN = cacheService.get("config", "openapi_token");
+            String API_TOKEN = cacheService.get("config", "openai_token");
             header.put("Authorization", "Bearer " + API_TOKEN);
 
             String retStr = HttpUtils.doPost("https://api.openai.com/v1/chat/completions", jsonObj, header);
