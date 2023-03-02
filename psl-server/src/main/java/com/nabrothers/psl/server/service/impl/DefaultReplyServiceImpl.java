@@ -114,7 +114,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             //reply.setFooter(String.format("抽象程度：%d%%", (int)(temperature*100)));
         } catch (Exception e) {
             log.error(e);
-            reply.setData("啊哦，出错了");
+            reply.setData("啊哦，出错了: " + e.getMessage());
         }
         return reply;
     }

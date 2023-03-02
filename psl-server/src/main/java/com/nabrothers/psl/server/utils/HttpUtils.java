@@ -328,8 +328,6 @@ public class HttpUtils {
             return result;
         } catch (ClientProtocolException e) {
             log.error(e);
-        } catch (IOException e) {
-            log.error(e);
         } finally {
             if (httpResponse != null) {
                 try {
@@ -400,8 +398,10 @@ public class HttpUtils {
                     return null;
                 }
             };
-            SSLContext sslContext = SSLContext.getInstance("TLS");
+            SSLContext sslContext = SSLContext.getInstance("SSL");
             sslContext.init(null, new TrustManager[] { x509mgr }, null);
+            SSLSessionContext sslsc = sslContext.getServerSessionContext();
+            sslsc.setSessionTimeout(0);
             ////创建HttpsURLConnection对象，并设置其SSLSocketFactory对象
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
             //  HttpsURLConnection对象就可以正常连接HTTPS了，无论其证书是否经权威机构的验证，只要实现了接口X509TrustManager的类MyX509TrustManager信任该证书。
