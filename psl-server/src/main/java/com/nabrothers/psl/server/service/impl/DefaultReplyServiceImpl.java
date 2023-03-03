@@ -76,6 +76,15 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             jsonObj.put("model", "gpt-3.5-turbo");
             jsonObj.put("max_tokens", 2048);
             JSONArray messages = new JSONArray();
+
+            String chatBg = cacheService.get("openai", "background");
+            if (null != chatBg){
+                JSONObject sysMessage = new JSONObject();
+                sysMessage.put("role", "system");
+                sysMessage.put("content", chatBg);
+                messages.add(sysMessage);
+            }
+
             JSONObject oneMessage = new JSONObject();
             oneMessage.put("role", "user");
             oneMessage.put("content", message);
@@ -89,10 +98,9 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             //jsonObj.put("stop", Arrays.asList("$Human:", "$懂哥:"));
 
             JSONObject header = new JSONObject();
-            String API_TOKEN = cacheService.get("config", "openai_token");
+            String API_TOKEN = cacheService.get("openai", "token");
             header.put("Authorization", "Bearer " + API_TOKEN);
 
-            int retryTimes = 3;
             String retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
 
             JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
