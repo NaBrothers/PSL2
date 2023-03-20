@@ -86,6 +86,12 @@ public class RequestServiceImpl implements RequestService {
                 break;
             case MESSAGE_GROUP:
                 GroupMessageRequest groupMessageRequest = param.toJavaObject(GroupMessageRequest.class);
+                if (messageRequest.getMessage().startsWith("[CQ:reply,id=")) {
+                    int lastIndex = messageRequest.getMessage().indexOf(']');
+                    Long replyId = Long.parseLong(messageRequest.getMessage().substring(13 , lastIndex));
+                    SessionContext.get().setReplyMessageId(replyId);
+                    messageRequest.setMessage(messageRequest.getMessage().substring(lastIndex + 1));
+                }
                 if (messageRequest.getMessage().startsWith(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()))) {
                     String message = messageRequest.getMessage().replace(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()), "").trim();
                     groupMessageRequest.setMessage(message);
@@ -119,6 +125,7 @@ public class RequestServiceImpl implements RequestService {
         session.setMessage(request.getMessage());
         session.setSelf(accountManager.getCurrentUser());
         session.setMessageType(MessageType.getByName(request.getMessage_type()));
+        session.setMessageId(request.getMessage_id());
         return session;
     }
 

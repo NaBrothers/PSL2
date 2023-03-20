@@ -14,4 +14,10 @@ public class Session {
     private MessageType messageType;
     private GroupDTO group;
     private boolean isAt;
+    private Long messageId;
+    private Long replyMessageId;
+
+    public boolean isReply() {
+        return replyMessageId != null;
+    }
 }
