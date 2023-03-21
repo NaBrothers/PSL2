@@ -1,7 +1,8 @@
 package com.nabrothers.psl.server.handler;
 
+import com.nabrothers.psl.sdk.message.Message;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 
 public interface RequestHandler {
-    void doHandle(CQHttpRequest request);
+    Message doHandle(CQHttpRequest request);
 }

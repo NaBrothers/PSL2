@@ -29,7 +29,7 @@ public class GroupMessageHandler extends MessageHandler {
     private HandlerContext context = HandlerContext.getInstance();
 
     @Override
-    public void doHandle(CQHttpRequest request) {
+    public Message doHandle(CQHttpRequest request) {
         GroupMessageRequest messageRequest = (GroupMessageRequest) request;
         log.info(String.format(LOG_SYNTAX, getGroupName(messageRequest.getGroup_id()), messageRequest.getGroup_id(), messageRequest.getSender().getCard(),
                 messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
@@ -38,7 +38,7 @@ public class GroupMessageHandler extends MessageHandler {
         try {
             Object result = context.handle(messageRequest.getMessage());
             if (result == null) {
-                return;
+                return null;
             }
             if (result instanceof Message) {
                 message = (Message) result;
@@ -50,7 +50,7 @@ public class GroupMessageHandler extends MessageHandler {
             message = new TextMessage(e.getMessage());
         } finally {
             if (message == null) {
-                return;
+                return null;
             }
             String response = "";
             if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
@@ -74,7 +74,9 @@ public class GroupMessageHandler extends MessageHandler {
 
             if (StringUtils.isNotEmpty(response)) {
                 Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
+                message.setId(msgId);
             }
+            return message;
         }
     }
 

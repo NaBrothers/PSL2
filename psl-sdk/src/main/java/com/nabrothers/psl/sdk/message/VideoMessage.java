@@ -17,6 +17,6 @@ public class VideoMessage extends Message implements CQCodeMessage{
 
     @Override
     public String getRawMessage() {
-        return "视频无法显示";
+        return url;
     }
 }

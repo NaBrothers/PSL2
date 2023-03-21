@@ -20,7 +20,7 @@ public class ImageMessage extends Message implements CQCodeMessage{
 
     @Override
     public String getRawMessage() {
-        String result = "图片无法显示";
+        String result = url;
         if (StringUtils.isNotEmpty(info)) {
             result = info + "\n" + result;
         }

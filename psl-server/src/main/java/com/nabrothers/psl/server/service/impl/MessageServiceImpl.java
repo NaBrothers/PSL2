@@ -15,7 +15,7 @@ public class MessageServiceImpl implements MessageService {
         param.put("message", msg);
         JSONObject res = HttpUtils.doGet("send_private_msg", param);
         if (res == null) {
-            return -1L;
+            return null;
         }
         return res.getLong("message_id");
     }
@@ -27,7 +27,7 @@ public class MessageServiceImpl implements MessageService {
         param.put("message", msg);
         JSONObject res = HttpUtils.doGet("send_group_msg", param);
         if (res == null) {
-            return -1L;
+            return null;
         }
         return res.getLong("message_id");
     }
@@ -40,6 +40,6 @@ public class MessageServiceImpl implements MessageService {
             case MESSAGE_GROUP:
                 return sendGroupMessage(session.getGroup().getId(), message);
         }
-        return 0L;
+        return null;
     }
 }

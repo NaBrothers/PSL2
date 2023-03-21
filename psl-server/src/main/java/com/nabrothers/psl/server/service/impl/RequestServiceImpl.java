@@ -5,6 +5,7 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.context.Session;
 import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.dto.UserDTO;
+import com.nabrothers.psl.sdk.message.Message;
 import com.nabrothers.psl.server.manager.AccountManager;
 import com.nabrothers.psl.server.request.*;
 import com.nabrothers.psl.sdk.enums.MessageType;
@@ -76,13 +77,15 @@ public class RequestServiceImpl implements RequestService {
         MessageType messageType = MessageType.getByName(messageRequest.getMessage_type());
         Session session = generateSession(messageRequest);
         SessionContext.add(session);
+        SessionContext.record(session);
+        Message response = null;
         switch (messageType) {
             case MESSAGE_PRIVATE:
                 PrivateMessageRequest privateMessageRequest = param.toJavaObject(PrivateMessageRequest.class);
                 privateMessageRequest.setMessage(decode(privateMessageRequest.getMessage()));
                 privateMessageRequest.setAt(true);
                 SessionContext.get().setAt(true);
-                handlers.get(EventType.PRIVATE_MESSAGE).doHandle(privateMessageRequest);
+                response = handlers.get(EventType.PRIVATE_MESSAGE).doHandle(privateMessageRequest);
                 break;
             case MESSAGE_GROUP:
                 GroupMessageRequest groupMessageRequest = param.toJavaObject(GroupMessageRequest.class);
@@ -101,8 +104,12 @@ public class RequestServiceImpl implements RequestService {
                 }
                 SessionContext.get().setGroup(accountManager.getGroup(groupMessageRequest.getGroup_id()));
                 groupMessageRequest.setMessage(decode(groupMessageRequest.getMessage()));
-                handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);
+                response = handlers.get(EventType.GROUP_MESSAGE).doHandle(groupMessageRequest);
                 break;
+        }
+        if (response != null) {
+            Session responseSession = generateSession(response);
+            SessionContext.record(responseSession);
         }
         SessionContext.clear();
     }
@@ -126,6 +133,16 @@ public class RequestServiceImpl implements RequestService {
         session.setSelf(accountManager.getCurrentUser());
         session.setMessageType(MessageType.getByName(request.getMessage_type()));
         session.setMessageId(request.getMessage_id());
+        return session;
+    }
+
+    private Session generateSession(Message response) {
+        Session session = new Session();
+        session.setSender(accountManager.getCurrentUser());
+        session.setMessage(response.getRawMessage());
+        session.setSelf(accountManager.getCurrentUser());
+        session.setMessageType(SessionContext.get().getMessageType());
+        session.setMessageId(response.getId());
         return session;
     }
 

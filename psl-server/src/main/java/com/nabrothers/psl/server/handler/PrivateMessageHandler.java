@@ -24,14 +24,14 @@ public class PrivateMessageHandler extends MessageHandler{
     private HandlerContext context = HandlerContext.getInstance();
 
     @Override
-    public void doHandle(CQHttpRequest request) {
+    public Message doHandle(CQHttpRequest request) {
         PrivateMessageRequest messageRequest = (PrivateMessageRequest) request;
         log.info(String.format(LOG_SYNTAX, messageRequest.getSender().getNickname(), messageRequest.getSender().getUser_id(), messageRequest.getMessage()));
         Message message = null;
         try {
             Object result = context.handle(messageRequest.getMessage());
             if (result == null) {
-                return;
+                return null;
             }
             if (result instanceof Message) {
                 message = (Message) result;
@@ -43,7 +43,7 @@ public class PrivateMessageHandler extends MessageHandler{
             message = new TextMessage(e.getMessage());
         } finally {
             if (message == null) {
-                return;
+                return null;
             }
             String response = "";
             if (GlobalConfig.ENABLE_IMAGE_MODE && message.isSupportImageMode()) {
@@ -59,7 +59,9 @@ public class PrivateMessageHandler extends MessageHandler{
 
             if (StringUtils.isNotEmpty(response)) {
                 Long msgId = messageService.sendPrivateMessage(messageRequest.getUser_id(), response);
+                message.setId(msgId);
             }
+            return message;
         }
     }
 }
