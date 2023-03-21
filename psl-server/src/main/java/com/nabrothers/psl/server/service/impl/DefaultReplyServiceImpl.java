@@ -2,6 +2,8 @@ package com.nabrothers.psl.server.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONArray;
+import com.nabrothers.psl.sdk.context.Session;
+import com.nabrothers.psl.sdk.context.SessionContext;
 import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.Message;
 import com.nabrothers.psl.sdk.message.SimpleMessage;
@@ -45,6 +47,18 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
                 messages.add(sysMessage);
             }
 
+            Session session = SessionContext.get();
+            if (session.isReply()) {
+                Session replyMessage = SessionContext.get(session.getReplyMessageId());
+                while (replyMessage != null) {
+                    JSONObject oneMessage = new JSONObject();
+                    oneMessage.put("role", replyMessage.getSender().getId().equals(replyMessage.getSelf().getId()) ? "assistant" : "user");
+                    oneMessage.put("content", replyMessage.getMessage());
+                    messages.add(oneMessage);
+                    replyMessage = SessionContext.get(replyMessage.getReplyMessageId());
+                }
+            }
+
             JSONObject oneMessage = new JSONObject();
             oneMessage.put("role", "user");
             oneMessage.put("content", message);
@@ -57,7 +71,13 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
 
             String retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
 
-            JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
+            JSONObject result = JSONObject.parseObject(retStr);
+            String finishReason = result.getString("finish_reason");
+            if (finishReason.equals("length")) {
+                throw new RuntimeException("超出最大上下文长度");
+            }
+
+            JSONArray choices = result.getJSONArray("choices");
             JSONObject choice = choices.getJSONObject(0);
             JSONObject retMsg = choice.getJSONObject("message");
             String text = retMsg.getString("content").replaceAll("\n\n", "\n");

@@ -95,7 +95,7 @@ public class RequestServiceImpl implements RequestService {
                     SessionContext.get().setReplyMessageId(replyId);
                     messageRequest.setMessage(messageRequest.getMessage().substring(lastIndex + 1));
                 }
-                if (messageRequest.getMessage().startsWith(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()))) {
+                if (messageRequest.getMessage().contains(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()))) {
                     String message = messageRequest.getMessage().replace(String.format(CQCode.AT_PATTERN, accountManager.getCurrentUser().getId()), "").trim();
                     groupMessageRequest.setMessage(message);
                     groupMessageRequest.setAt(true);
