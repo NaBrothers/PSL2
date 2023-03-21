@@ -144,7 +144,7 @@ public class RequestServiceImpl implements RequestService {
         session.setMessageType(SessionContext.get().getMessageType());
         session.setMessageId(response.getId());
         session.setAt(SessionContext.get().isAt());
-        session.setReplyMessageId(SessionContext.get().getReplyMessageId());
+        session.setReplyMessageId(SessionContext.get().getMessageId());
         return session;
     }
 
