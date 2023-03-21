@@ -71,14 +71,14 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
 
             String retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
 
-            JSONObject result = JSONObject.parseObject(retStr);
-            String finishReason = result.getString("finish_reason");
+            JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
+            JSONObject choice = choices.getJSONObject(0);
+
+            String finishReason = choice.getString("finish_reason");
             if (finishReason.equals("length")) {
                 throw new RuntimeException("超出最大上下文长度");
             }
 
-            JSONArray choices = result.getJSONArray("choices");
-            JSONObject choice = choices.getJSONObject(0);
             JSONObject retMsg = choice.getJSONObject("message");
             String text = retMsg.getString("content").replaceAll("\n\n", "\n");
             reply.setData(URLDecoder.decode(text, "UTF-8"));
