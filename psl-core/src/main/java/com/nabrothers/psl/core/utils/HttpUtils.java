@@ -45,6 +45,9 @@ public class HttpUtils {
             if(httpResponse.getStatusLine().getStatusCode() != 200){
                 return null;
             }
+            if (entity.getContentEncoding() != null && entity.getContentEncoding().toString().contains("br")) {
+                return BrotliUtils.toString(entity.getContent());
+            }
             return EntityUtils.toString(entity);
         } catch (ClientProtocolException e) {
             // TODO Auto-generated catch block
@@ -90,6 +93,9 @@ public class HttpUtils {
                 return null;
             }
             HttpEntity entity = httpResponse.getEntity();
+            if (entity.getContentEncoding() != null && entity.getContentEncoding().toString().contains("br")) {
+                return BrotliUtils.toString(entity.getContent());
+            }
             String result = EntityUtils.toString(entity);
             return result;
         } catch (ClientProtocolException e) {
