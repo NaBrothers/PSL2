@@ -100,7 +100,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
 
             JSONObject retMsg = choice.getJSONObject("message");
             String text = retMsg.getString("content").replaceAll("\n\n", "\n");
-            reply.setData(URLDecoder.decode(text, "UTF-8"));
+            reply.setData(text);
 
             String finishReason = choice.getString("finish_reason");
             if (finishReason.equals("length")) {
