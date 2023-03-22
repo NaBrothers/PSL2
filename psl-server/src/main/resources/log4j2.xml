@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration status="trace">
-    <appenders>
-        <Console name="Console" target="SYSTEM_OUT" follow="true">
-            <PatternLayout pattern="%d{HH:mm:ss} [%-4level] %logger{36} - %msg%n"/>
-        </Console>
-        <!--异步磁盘appender，默认按天&按512M文件大小切分日志，默认最多保留30个日志文件，默认为非阻塞模式-->
-        <XMDFile name="XMDFileAppender" fileName="logs/app.log"  xmdFilePath="/data/applogs/">
-        </XMDFile>
+<Configuration status="trace">
+<Appenders>
+    <Console name="CONSOLE">
+        <PatternLayout pattern="%d %-5p %t %l %m%n"/>
+    </Console>
 
-        <!--ERROR日志、WARN日志单独输出到一个文件-->
-        <XMDFile name="ERROR-LOG" fileName="logs/error.log"  xmdFilePath="/data/applogs/">
-            <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
-        </XMDFile>
-        <XMDFile name="WARN-LOG" fileName="logs/warn.log"  xmdFilePath="/data/applogs/">
-            <Filters>
-                <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
-                <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY"/>
-            </Filters>
-        </XMDFile>
-        <XMDFile ></XMDFile>
-    </appenders>
+    <!-- 写到本地日志 -->
+    <!--第一步：配置appender-->
+    <RollingFile name="INFO-LOCAL" fileName="logs/info.log" filePattern="logs/info-%d{yyyy-MM-dd}-%i.log" append="true">
+        <PatternLayout>
+            <Pattern>%d %-5p %t %l %m%n</Pattern>
+        </PatternLayout>
+        <Policies>
+            <TimeBasedTriggeringPolicy />
+            <SizeBasedTriggeringPolicy size="50 MB"/>
+        </Policies>
+        <Filters>
+            <Filter class="org.apache.log4j.varia.LevelRangeFilter" levelMin="DEBUG" levelMax="INFO" acceptOnMatch="true"/>
+        </Filters>
+    </RollingFile>
+    <RollingFile name="ERROR-LOCAL" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log" append="true">
+        <PatternLayout>
+            <Pattern>%d %-5p %t %l %m%n</Pattern>
+        </PatternLayout>
+        <Policies>
+            <TimeBasedTriggeringPolicy />
+            <SizeBasedTriggeringPolicy size="50 MB"/>
+        </Policies>
+        <Filters>
+            <Filter class="org.apache.log4j.varia.LevelRangeFilter" levelMin="WARN" levelMax="FATAL" acceptOnMatch="true"/>
+        </Filters>
+    </RollingFile>
 
-    <loggers>
-        <root level="info">
-            <appender-ref ref="Console"/>
-            <appender-ref ref="XMDFileAppender"/>
-            <appender-ref ref="ERROR-LOG"/>
-            <appender-ref ref="WARN-LOG"/>
-        </root>
-    </loggers>
-</configuration>
+</Appenders>
+
+<Loggers>
+    <Root level="info">
+        <AppenderRef ref="CONSOLE"/>
+        <AppenderRef ref="INFO-LOCAL"/>
+        <AppenderRef ref="ERROR-LOCAL"/>
+    </Root>
+</Loggers>
+</Configuration>
