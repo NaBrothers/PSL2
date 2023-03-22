@@ -1,5 +1,6 @@
 package com.nabrothers.psl.server.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONArray;
 import com.nabrothers.psl.sdk.context.Session;
@@ -36,7 +37,10 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
         try {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("model", "gpt-3.5-turbo");
-            jsonObj.put("max_tokens", 2048);
+
+            Long maxTokens = Long.valueOf(cacheService.get("openai", "max_tokens", "1024"));
+
+            jsonObj.put("max_tokens", maxTokens);
             JSONArray messages = new JSONArray();
 
             String chatBg = cacheService.get("openai", "background");
@@ -71,17 +75,37 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
 
             String retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
 
-            JSONArray choices = JSONObject.parseObject(retStr).getJSONArray("choices");
-            JSONObject choice = choices.getJSONObject(0);
+            JSONObject result = JSONObject.parseObject(retStr);
+            JSONArray choices = result.getJSONArray("choices");
 
-            String finishReason = choice.getString("finish_reason");
-            if (finishReason.equals("length")) {
-                throw new RuntimeException("超出最大上下文长度");
+            if (choices == null) {
+                JSONObject error = result.getJSONObject("error");
+                if (error != null) {
+                    String code = error.getString("code");
+                    if (code.equals("context_length_exceeded")) {
+                        messages = new JSONArray();
+                        messages.add(oneMessage);
+                        jsonObj.put("messages", messages);
+                        retStr = HttpUtils.doPostWithProxy("https://api.openai.com/v1/chat/completions", jsonObj, header);
+                        result = JSONObject.parseObject(retStr);
+                        choices = result.getJSONArray("choices");
+                        reply.setFooter("超出最大上下文上限，使用新上下文");
+                    } else {
+                        throw new RuntimeException(error.getString("message"));
+                    }
+                }
             }
+
+            JSONObject choice = choices.getJSONObject(0);
 
             JSONObject retMsg = choice.getJSONObject("message");
             String text = retMsg.getString("content").replaceAll("\n\n", "\n");
             reply.setData(URLDecoder.decode(text, "UTF-8"));
+
+            String finishReason = choice.getString("finish_reason");
+            if (finishReason.equals("length")) {
+                reply.setFooter("超出回复上限：" + maxTokens + "，已截断");
+            }
         } catch (Exception e) {
             log.error(e);
             reply.setData("啊哦，出错了: " + e.getMessage());

@@ -3,6 +3,7 @@ package com.nabrothers.psl.server.service.impl;
 import com.nabrothers.psl.sdk.service.CacheService;
 
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,15 @@ public class CacheServiceImpl implements CacheService {
             log.error("RocksDB.get", e);
         }
         return null;
+    }
+
+    @Override
+    public String get(String category, String key, String defaultValue) {
+        String value = get(category, key);
+        if (StringUtils.isEmpty(value)) {
+            return defaultValue;
+        }
+        return value;
     }
 
     @Override

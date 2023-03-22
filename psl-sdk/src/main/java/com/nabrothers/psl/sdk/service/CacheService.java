@@ -5,5 +5,7 @@ public interface CacheService {
 
     String get(String category, String key);
 
+    String get(String category, String key, String defaultValue);
+
     void delete(String category, String key);
 }
