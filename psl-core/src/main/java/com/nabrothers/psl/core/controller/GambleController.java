@@ -18,6 +18,7 @@ import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Handler(command = "菠菜")
+@Log4j2
 public class GambleController {
     @Resource
     private MessageService messageService;
@@ -217,61 +219,66 @@ public class GambleController {
     }
 
     private void refreshMatchStatus() {
-        String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_zc");
-        JSONArray dateList = JSON.parseObject(retStr).getJSONObject("data").getJSONArray("list");
-        Set<Long> betRecordSet = new HashSet<>();
-        for (Object dateObj : dateList) {
-            JSONObject date = (JSONObject) dateObj;
-            JSONArray games = date.getJSONArray("list");
-            for (Object gameObj : games) {
-                JSONObject game = (JSONObject) gameObj;
-                if (game.getString("is_finish").equals("1") || game.getIntValue("match_status") > 4) {
-                    Integer left = game.getJSONObject("left_team").getInteger("score");
-                    Integer right = game.getJSONObject("right_team").getInteger("score");
-                    int res = 0;
-                    if (left > right) {
-                        res = 1;
-                    } else if (left < right) {
-                        res = -1;
-                    }
-                    List<BetRecordDTO> records = betRecordDAO.queryByMatchId(game.getLong("saishi_id"));
-                    for (BetRecordDTO record : records) {
-                        if (betRecordSet.contains(record.getId())) {
-                            continue;
+        try {
+            String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_zc");
+            JSONArray dateList = JSON.parseObject(retStr).getJSONObject("data").getJSONArray("list");
+            Set<Long> betRecordSet = new HashSet<>();
+            for (Object dateObj : dateList) {
+                JSONObject date = (JSONObject) dateObj;
+                JSONArray games = date.getJSONArray("list");
+                for (Object gameObj : games) {
+                    JSONObject game = (JSONObject) gameObj;
+                    if (game.getString("is_finish").equals("1") || game.getIntValue("match_status") > 4) {
+                        Integer left = game.getJSONObject("left_team").getInteger("score");
+                        Integer right = game.getJSONObject("right_team").getInteger("score");
+                        int res = 0;
+                        if (left > right) {
+                            res = 1;
+                        } else if (left < right) {
+                            res = -1;
                         }
-                        if (record.getResult() == null) {
-                            betRecordSet.add(record.getId());
-                            betRecordDAO.updateResultById(res, record.getId());
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(String.format("[%s] 已完赛，%s %s-%s %s，",
-                                    game.getString("saishi_id"),
-                                    game.getJSONObject("left_team").getString("name"),
-                                    game.getJSONObject("left_team").getString("score"),
-                                    game.getJSONObject("right_team").getString("score"),
-                                    game.getJSONObject("right_team").getString("name")
-                                    ));
-                            if (res == record.getExpect()) {
-                                long money = 0;
-                                if (res == 1) {
-                                    money = (long) (record.getWin() * record.getAmount());
-                                } else if (res == 0) {
-                                    money = (long) (record.getDraw() * record.getAmount());
-                                } else {
-                                    money = (long) (record.getLose() * record.getAmount());
-                                }
-                                sb.append("恭喜您获得 " + money);
-                                try {
-                                    transactionService.add(record.getUserId(), money);
-                                } catch (TransactionException ignore) {}
-                            } else {
-                                sb.append("再接再厉");
+                        List<BetRecordDTO> records = betRecordDAO.queryByMatchId(game.getLong("saishi_id"));
+                        for (BetRecordDTO record : records) {
+                            if (betRecordSet.contains(record.getId())) {
+                                continue;
                             }
-                            messageService.sendGroupMessage(Config.DEFAULT_GROUP_ID, String.format(CQCode.AT_PATTERN, record.getUserId()) + sb.toString());
+                            if (record.getResult() == null) {
+                                betRecordSet.add(record.getId());
+                                betRecordDAO.updateResultById(res, record.getId());
+                                StringBuilder sb = new StringBuilder();
+                                sb.append(String.format("[%s] 已完赛，%s %s-%s %s，",
+                                        game.getString("saishi_id"),
+                                        game.getJSONObject("left_team").getString("name"),
+                                        game.getJSONObject("left_team").getString("score"),
+                                        game.getJSONObject("right_team").getString("score"),
+                                        game.getJSONObject("right_team").getString("name")
+                                ));
+                                if (res == record.getExpect()) {
+                                    long money = 0;
+                                    if (res == 1) {
+                                        money = (long) (record.getWin() * record.getAmount());
+                                    } else if (res == 0) {
+                                        money = (long) (record.getDraw() * record.getAmount());
+                                    } else {
+                                        money = (long) (record.getLose() * record.getAmount());
+                                    }
+                                    sb.append("恭喜您获得 " + money);
+                                    try {
+                                        transactionService.add(record.getUserId(), money);
+                                    } catch (TransactionException ignore) {
+                                    }
+                                } else {
+                                    sb.append("再接再厉");
+                                }
+                                messageService.sendGroupMessage(Config.DEFAULT_GROUP_ID, String.format(CQCode.AT_PATTERN, record.getUserId()) + sb.toString());
+                            }
                         }
-                    }
 
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.error("刷新比赛信息状态", e);
         }
     }
 
