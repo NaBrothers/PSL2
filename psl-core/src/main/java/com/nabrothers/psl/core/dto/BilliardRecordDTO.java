@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data
 public class BilliardRecordDTO {
-    private Integer gameType;
     private String winnerId;
     private String loserId;
-    private Integer scoreWinner;
-    private Integer scoreLoser;
+    private Integer scoreW;
+    private Integer scoreL;
+    private Integer gameType;
 
 }
