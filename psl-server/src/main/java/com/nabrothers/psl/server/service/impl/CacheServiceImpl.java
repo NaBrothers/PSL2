@@ -80,10 +80,12 @@ public class CacheServiceImpl implements CacheService {
             RocksIterator iterator = rocksDB.newIterator();
             iterator.seek((category + "_").getBytes(StandardCharsets.UTF_8));
             for (; iterator.isValid(); iterator.next()) {
-                if (!new String(iterator.key(), StandardCharsets.UTF_8).startsWith(category + "_")) {
+                String key = new String(iterator.key(), StandardCharsets.UTF_8);
+                if (!key.startsWith(category + "_")) {
                     break;
                 }
-                result.put(new String(iterator.key(), StandardCharsets.UTF_8), new String(iterator.value(), StandardCharsets.UTF_8));
+                key = key.split("_", 2)[1];
+                result.put(key, new String(iterator.value(), StandardCharsets.UTF_8));
             }
         } catch (Exception e) {
             log.error("RocksDB.getAll", e);
