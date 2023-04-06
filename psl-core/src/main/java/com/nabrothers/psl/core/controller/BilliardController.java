@@ -41,6 +41,7 @@ public class BilliardController {
         gameTypeCo.put(1, Integer.valueOf(cacheService.get("billiard", "upperCo")));
         gameTypeCo.put(2, Integer.valueOf(cacheService.get("billiard", "lowerCo")));
         gameTypeCo.put(3, Integer.valueOf(cacheService.get("billiard", "finalCo")));
+        gameTypeCo.put(4, Integer.valueOf(cacheService.get("billiard", "friendCo")));
 
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         for (BilliardRecordDTO it : brList) {
@@ -108,6 +109,7 @@ public class BilliardController {
         typeMap.put("胜者组", 1);
         typeMap.put("败者组", 2);
         typeMap.put("决赛", 3);
+        typeMap.put("友谊赛", 4);
 
         if (!typeMap.containsKey(type)) {
             return "参数错误";
@@ -167,6 +169,7 @@ public class BilliardController {
         gameType.put(1, "胜者组");
         gameType.put(2, "败者组");
         gameType.put(3, "决赛");
+        gameType.put(4, "友谊赛");
 
         for (BilliardRecordDTO br : brList) {
             String players = br.getWinnerId() + br.getLoserId();
@@ -203,6 +206,56 @@ public class BilliardController {
     }
 
     @Handler(command = "查询比赛")
+    public TextMessage queryByGameType() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("比赛记录");
+        StringBuilder sb = new StringBuilder();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Map<Long, String> playerMap = new HashMap<>();
+        Map<Integer, String> gameTypeMap = new HashMap<>();
+        gameTypeMap.put(0, "小组赛");
+        gameTypeMap.put(1, "胜者组");
+        gameTypeMap.put(2, "败者组");
+        gameTypeMap.put(3, "决赛");
+        gameTypeMap.put(4, "友谊赛");
+        for (BilliardRecordDTO br : brList) {
+            String players = br.getWinnerId() + br.getLoserId();
+            String[] player = players.split(",");
+            for (String p : player) {
+                if (!playerMap.containsKey(Long.valueOf(p))) {
+                    playerMap.put(Long.valueOf(p), userDAO.queryByUserId(Long.valueOf(p)).getName());
+                }
+            }
+        }
+
+        for (BilliardRecordDTO br : brList) {
+            String players = br.getWinnerId() + br.getLoserId();
+            String winners = br.getWinnerId();
+            String losers = br.getLoserId();
+
+            String[] player = players.split(",");
+            String[] winner = winners.split(",");
+            String[] loser = losers.split(",");
+
+            String[] wns = new String[winner.length];
+            String[] lns = new String[loser.length];
+            for (int j = 0; j < winner.length; j++) {
+                wns[j] = playerMap.get(Long.valueOf(player[j]));
+            }
+            for (int j = 0; j < loser.length; j++) {
+                lns[j] = playerMap.get(Long.valueOf(player[j + winner.length]));
+            }
+            sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
+                    + String.valueOf(br.getScoreW())
+                    + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
+        }
+
+        textMessage.setData(sb.toString());
+
+        return textMessage;
+    }
+
+    @Handler(command = "查询比赛")
     public TextMessage queryByGameType(@Param("比赛类型") String gameType) {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle(gameType + " 比赛记录");
@@ -214,6 +267,7 @@ public class BilliardController {
         gameTypeMap.put(1, "胜者组");
         gameTypeMap.put(2, "败者组");
         gameTypeMap.put(3, "决赛");
+        gameTypeMap.put(4, "友谊赛");
         if (!gameTypeMap.containsValue(gameType)) {
             textMessage.setData("比赛类型不存在");
             return textMessage;
