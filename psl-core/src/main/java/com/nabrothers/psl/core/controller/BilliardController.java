@@ -51,12 +51,6 @@ public class BilliardController {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League");
         Map<Long, Integer> playersMap = new HashMap<>();
-        Map<Integer, Integer> gameTypeCo = new HashMap<>();
-        gameTypeCo.put(0, Integer.valueOf(cacheService.get("billiard", "groupCo")));
-        gameTypeCo.put(1, Integer.valueOf(cacheService.get("billiard", "upperCo")));
-        gameTypeCo.put(2, Integer.valueOf(cacheService.get("billiard", "lowerCo")));
-        gameTypeCo.put(3, Integer.valueOf(cacheService.get("billiard", "finalCo")));
-        gameTypeCo.put(4, Integer.valueOf(cacheService.get("billiard", "friendCo")));
 
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         for (BilliardRecordDTO it : brList) {
@@ -85,10 +79,12 @@ public class BilliardController {
             double dr = winnerPoints - loserPoints;
             double we = 1 / (Math.pow(10, (-dr / Integer.valueOf(cacheService.get("billiard", "weCo")))) + 1);
 
+            Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(it.getGameType())));
+
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
                 playersMap.put(userid,
-                        (int) Math.round((playersMap.get(userid) + gameTypeCo.get(it.getGameType()) * (1 - we))));
+                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we))));
             }
 
             for (int i = 0; i < loserArray.length; i++) {
