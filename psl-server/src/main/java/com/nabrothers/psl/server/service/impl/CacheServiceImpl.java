@@ -6,9 +6,12 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
+import org.rocksdb.RocksIterator;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Log4j2
 @Service
@@ -68,5 +71,23 @@ public class CacheServiceImpl implements CacheService {
         } catch (Exception e) {
             log.error("RocksDB.delete", e);
         }
+    }
+
+    @Override
+    public Map<String, String> getAll(String category) {
+        Map<String, String> result = new TreeMap<>();
+        try {
+            RocksIterator iterator = rocksDB.newIterator();
+            iterator.seek((category + "_").getBytes(StandardCharsets.UTF_8));
+            for (; iterator.isValid(); iterator.next()) {
+                if (!new String(iterator.key(), StandardCharsets.UTF_8).startsWith(category + "_")) {
+                    break;
+                }
+                result.put(new String(iterator.key(), StandardCharsets.UTF_8), new String(iterator.value(), StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            log.error("RocksDB.getAll", e);
+        }
+        return result;
     }
 }
