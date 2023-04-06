@@ -1,5 +1,6 @@
 package com.nabrothers.psl.core.controller;
 
+import com.google.common.base.Joiner;
 import com.nabrothers.psl.core.dao.BilliardRecordDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.BilliardRecordDTO;
@@ -127,8 +128,6 @@ public class BilliardController {
             return "参数错误";
         }
 
-        String winnerid = "";
-        String loserid = "";
         String[] winnerArray = winner.split(",|，");
         String[] loserArray = loser.split(",|，");
         for (int i = 0; i < winnerArray.length; i++) {
@@ -136,7 +135,6 @@ public class BilliardController {
             if (winnerDTO == null) {
                 return "参数错误";
             }
-            winnerid += String.valueOf(winnerDTO.getUserId()) + ",";
         }
 
         for (int i = 0; i < loserArray.length; i++) {
@@ -144,13 +142,12 @@ public class BilliardController {
             if (loserDTO == null) {
                 return "参数错误";
             }
-            loserid += String.valueOf(loserDTO.getUserId()) + ",";
         }
 
         BilliardRecordDTO billiardRecordDTO = new BilliardRecordDTO();
         billiardRecordDTO.setGameType(typeGameMap.get(type));
-        billiardRecordDTO.setWinnerId(winnerid);
-        billiardRecordDTO.setLoserId(loserid);
+        billiardRecordDTO.setWinnerId(Joiner.on(',').join(winnerArray));
+        billiardRecordDTO.setLoserId(Joiner.on(',').join(loserArray));
         billiardRecordDTO.setScoreW(Integer.valueOf(scoreW));
         billiardRecordDTO.setScoreL(Integer.valueOf(scoreL));
 
@@ -159,7 +156,7 @@ public class BilliardController {
         return "记录成功";
     }
 
-    @Handler(command = "查询选手")
+    @Handler(command = "选手")
     public TextMessage queryByUserName(@Param("选手") String username) {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle(username + " 比赛记录");
@@ -207,7 +204,7 @@ public class BilliardController {
         return textMessage;
     }
 
-    @Handler(command = "查询比赛")
+    @Handler(command = "比赛")
     public TextMessage queryByGameType() {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("比赛记录");
@@ -244,56 +241,6 @@ public class BilliardController {
             sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
                     + String.valueOf(br.getScoreW())
                     + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
-        }
-
-        textMessage.setData(sb.toString());
-
-        return textMessage;
-    }
-
-    @Handler(command = "查询比赛")
-    public TextMessage queryByGameType(@Param("比赛类型") String gameType) {
-        TextMessage textMessage = new TextMessage();
-        textMessage.setTitle(gameType + " 比赛记录");
-        StringBuilder sb = new StringBuilder();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
-        Map<Long, String> playerMap = new HashMap<>();
-        if (!gameTypeMap.containsValue(gameType)) {
-            textMessage.setData("比赛类型不存在");
-            return textMessage;
-        }
-        for (BilliardRecordDTO br : brList) {
-            String players = br.getWinnerId() + br.getLoserId();
-            String[] player = players.split(",");
-            for (String p : player) {
-                if (!playerMap.containsKey(Long.valueOf(p))) {
-                    playerMap.put(Long.valueOf(p), userDAO.queryByUserId(Long.valueOf(p)).getName());
-                }
-            }
-        }
-
-        for (BilliardRecordDTO br : brList) {
-            if (gameTypeMap.get(br.getGameType()).equals(gameType)) {
-                String players = br.getWinnerId() + br.getLoserId();
-                String winners = br.getWinnerId();
-                String losers = br.getLoserId();
-
-                String[] player = players.split(",");
-                String[] winner = winners.split(",");
-                String[] loser = losers.split(",");
-
-                String[] wns = new String[winner.length];
-                String[] lns = new String[loser.length];
-                for (int j = 0; j < winner.length; j++) {
-                    wns[j] = playerMap.get(Long.valueOf(player[j]));
-                }
-                for (int j = 0; j < loser.length; j++) {
-                    lns[j] = playerMap.get(Long.valueOf(player[j + winner.length]));
-                }
-                sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
-                        + String.valueOf(br.getScoreW())
-                        + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
-            }
         }
 
         textMessage.setData(sb.toString());
