@@ -167,9 +167,10 @@ public class BilliardController {
         Map<Long, String> playerMap = new HashMap<>();
 
         for (BilliardRecordDTO br : brList) {
-            String players = br.getWinnerId() + br.getLoserId();
-            String[] player = players.split(",");
-            for (String p : player) {
+            List<String> players = new ArrayList<>();
+            players.addAll(Arrays.asList(br.getWinnerId().split(",")));
+            players.addAll(Arrays.asList(br.getLoserId().split(",")));
+            for (String p : players) {
                 if (!playerMap.containsKey(Long.valueOf(p))) {
                     playerMap.put(Long.valueOf(p), userDAO.queryByUserId(Long.valueOf(p)).getName());
                 }
@@ -177,10 +178,12 @@ public class BilliardController {
         }
 
         for (BilliardRecordDTO br : brList) {
-            String players = br.getWinnerId() + br.getLoserId();
+            List<String> players = new ArrayList<>();
+            String[] winner = br.getWinnerId().split(",");
+            String[] loser = br.getLoserId().split(",");
+            players.addAll(Arrays.asList(winner));
+            players.addAll(Arrays.asList(loser));
             if (players.contains(String.valueOf(userid))) {
-                String[] winner = br.getWinnerId().split(",");
-                String[] loser = br.getLoserId().split(",");
                 String[] wns = new String[winner.length];
                 String[] lns = new String[loser.length];
                 for (int j = 0; j < winner.length; j++) {
@@ -208,9 +211,10 @@ public class BilliardController {
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         Map<Long, String> playerMap = new HashMap<>();
         for (BilliardRecordDTO br : brList) {
-            String players = br.getWinnerId() + br.getLoserId();
-            String[] player = players.split(",");
-            for (String p : player) {
+            List<String> players = new ArrayList<>();
+            players.addAll(Arrays.asList(br.getWinnerId().split(",")));
+            players.addAll(Arrays.asList(br.getLoserId().split(",")));
+            for (String p : players) {
                 if (!playerMap.containsKey(Long.valueOf(p))) {
                     playerMap.put(Long.valueOf(p), userDAO.queryByUserId(Long.valueOf(p)).getName());
                 }
@@ -218,21 +222,19 @@ public class BilliardController {
         }
 
         for (BilliardRecordDTO br : brList) {
-            String players = br.getWinnerId() + br.getLoserId();
-            String winners = br.getWinnerId();
-            String losers = br.getLoserId();
-
-            String[] player = players.split(",");
-            String[] winner = winners.split(",");
-            String[] loser = losers.split(",");
+            List<String> players = new ArrayList<>();
+            String[] winner = br.getWinnerId().split(",");
+            String[] loser = br.getLoserId().split(",");
+            players.addAll(Arrays.asList(winner));
+            players.addAll(Arrays.asList(loser));
 
             String[] wns = new String[winner.length];
             String[] lns = new String[loser.length];
             for (int j = 0; j < winner.length; j++) {
-                wns[j] = playerMap.get(Long.valueOf(player[j]));
+                wns[j] = playerMap.get(Long.valueOf(players.get(j)));
             }
             for (int j = 0; j < loser.length; j++) {
-                lns[j] = playerMap.get(Long.valueOf(player[j + winner.length]));
+                lns[j] = playerMap.get(Long.valueOf(players.get(j + winner.length)));
             }
             sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
                     + String.valueOf(br.getScoreW())
