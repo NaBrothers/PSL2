@@ -31,6 +31,20 @@ public class BilliardController {
     @Resource
     private BilliardRecordDAO billiardRecordDAO;
 
+    private static Map<Integer, String> gameTypeMap = new HashMap<>();
+
+    private static Map<String, Integer> typeGameMap = new HashMap<>();
+
+    static {
+        gameTypeMap.put(0, "小组赛");
+        gameTypeMap.put(1, "胜者组");
+        gameTypeMap.put(2, "败者组");
+        gameTypeMap.put(3, "决赛");
+        gameTypeMap.put(4, "友谊赛");
+
+        gameTypeMap.entrySet().stream().forEach(entry -> typeGameMap.put(entry.getValue(), entry.getKey()));
+    }
+
     @Handler(info = "GBL积分榜")
     public TextMessage billiard() {
         TextMessage textMessage = new TextMessage();
@@ -104,14 +118,8 @@ public class BilliardController {
     @Handler(command = "记录")
     public String billiardRecord(@Param("比赛类型") String type, @Param("胜者") String winner, @Param("胜者得分") String scoreW,
             @Param("败者") String loser, @Param("败者得分") String scoreL) {
-        Map<String, Integer> typeMap = new HashMap<>();
-        typeMap.put("小组赛", 0);
-        typeMap.put("胜者组", 1);
-        typeMap.put("败者组", 2);
-        typeMap.put("决赛", 3);
-        typeMap.put("友谊赛", 4);
 
-        if (!typeMap.containsKey(type)) {
+        if (!typeGameMap.containsKey(type)) {
             return "参数错误";
         }
 
@@ -140,7 +148,7 @@ public class BilliardController {
         }
 
         BilliardRecordDTO billiardRecordDTO = new BilliardRecordDTO();
-        billiardRecordDTO.setGameType(typeMap.get(type));
+        billiardRecordDTO.setGameType(typeGameMap.get(type));
         billiardRecordDTO.setWinnerId(winnerid);
         billiardRecordDTO.setLoserId(loserid);
         billiardRecordDTO.setScoreW(Integer.valueOf(scoreW));
@@ -164,12 +172,6 @@ public class BilliardController {
         Long userid = userDTO.getUserId();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         Map<Long, String> playerMap = new HashMap<>();
-        Map<Integer, String> gameType = new HashMap<>();
-        gameType.put(0, "小组赛");
-        gameType.put(1, "胜者组");
-        gameType.put(2, "败者组");
-        gameType.put(3, "决赛");
-        gameType.put(4, "友谊赛");
 
         for (BilliardRecordDTO br : brList) {
             String players = br.getWinnerId() + br.getLoserId();
@@ -194,7 +196,7 @@ public class BilliardController {
                 for (int j = 0; j < loser.length; j++) {
                     lns[j] = playerMap.get(Long.valueOf(loser[j]));
                 }
-                sb.append(gameType.get(br.getGameType()) + ": " + String.join(",", wns) + " "
+                sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
                         + String.valueOf(br.getScoreW())
                         + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
             }
@@ -212,12 +214,6 @@ public class BilliardController {
         StringBuilder sb = new StringBuilder();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         Map<Long, String> playerMap = new HashMap<>();
-        Map<Integer, String> gameTypeMap = new HashMap<>();
-        gameTypeMap.put(0, "小组赛");
-        gameTypeMap.put(1, "胜者组");
-        gameTypeMap.put(2, "败者组");
-        gameTypeMap.put(3, "决赛");
-        gameTypeMap.put(4, "友谊赛");
         for (BilliardRecordDTO br : brList) {
             String players = br.getWinnerId() + br.getLoserId();
             String[] player = players.split(",");
@@ -262,12 +258,6 @@ public class BilliardController {
         StringBuilder sb = new StringBuilder();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         Map<Long, String> playerMap = new HashMap<>();
-        Map<Integer, String> gameTypeMap = new HashMap<>();
-        gameTypeMap.put(0, "小组赛");
-        gameTypeMap.put(1, "胜者组");
-        gameTypeMap.put(2, "败者组");
-        gameTypeMap.put(3, "决赛");
-        gameTypeMap.put(4, "友谊赛");
         if (!gameTypeMap.containsValue(gameType)) {
             textMessage.setData("比赛类型不存在");
             return textMessage;
