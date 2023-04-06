@@ -22,7 +22,7 @@ public interface UserDAO {
     @Select("select * from `User` where name = #{name}")
     UserDTO queryByName(String name);
 
-    @Select("select * from `User` where alias like \"%\"#{alias}\",%\"")
+    @Select("select * from `User` where alias like \"%\"#{alias}\"%\"")
     UserDTO queryByAlias(String name);
 
     @Select("select * from `User`")
