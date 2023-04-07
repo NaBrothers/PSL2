@@ -110,7 +110,8 @@ public class BilliardController {
         for (Map.Entry<Long, Integer> entry : entrys) {
             i++;
             Long userid = entry.getKey();
-            sb.append(String.format("%d - %s 积分: %d\n", i, userDAO.queryByUserId(userid).getName(), entry.getValue()));
+            UserDTO user = userDAO.queryByUserId(userid);
+            sb.append(String.format("%d - [%d] %s %d\n", i, user.getId(), user.getName(), entry.getValue()));
         }
 
         textMessage.setData(sb.toString());
@@ -165,13 +166,13 @@ public class BilliardController {
     @Handler(command = "选手")
     public TextMessage queryByUserName(@Param("选手") String username) {
         TextMessage textMessage = new TextMessage();
-        textMessage.setTitle(username + " 比赛记录");
         StringBuilder sb = new StringBuilder();
         UserDTO userDTO = userDAO.queryByAlias(username);
         if (userDTO == null) {
             textMessage.setData("无比赛记录");
             return textMessage;
         }
+        textMessage.setTitle(userDTO.getName() + " 比赛记录");
         Long userid = userDTO.getUserId();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
         Map<Long, String> playerMap = new HashMap<>();
@@ -202,7 +203,7 @@ public class BilliardController {
                 for (int j = 0; j < loser.length; j++) {
                     lns[j] = playerMap.get(Long.valueOf(loser[j]));
                 }
-                sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
+                sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) + " "
                         + String.valueOf(br.getScoreW())
                         + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
             }

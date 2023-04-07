@@ -13,7 +13,6 @@ public class BilliardRecordDTO {
     private Integer scoreW;
     private Integer scoreL;
     private Integer gameType;
-    private String date;
     private Date updateTime;
     private Date createTime;
 }
