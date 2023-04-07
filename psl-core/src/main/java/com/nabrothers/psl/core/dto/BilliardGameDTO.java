@@ -8,5 +8,6 @@ public class BilliardGameDTO {
     private String name;
     private String location;
     private String players;
+    private String date;
     private String remark;
 }

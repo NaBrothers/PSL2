@@ -214,18 +214,49 @@ public class BilliardController {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("比赛记录");
         StringBuilder sb = new StringBuilder();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
-        Map<Long, String> playerMap = new HashMap<>();
-        for (BilliardRecordDTO br : brList) {
-            List<String> players = new ArrayList<>();
-            players.addAll(Arrays.asList(br.getWinnerId().split(",")));
-            players.addAll(Arrays.asList(br.getLoserId().split(",")));
-            for (String p : players) {
-                if (!playerMap.containsKey(Long.valueOf(p))) {
-                    playerMap.put(Long.valueOf(p), userDAO.queryByUserId(Long.valueOf(p)).getName());
-                }
-            }
+
+        List<BilliardGameDTO> games = billiardGameDAO.queryAll();
+
+        for (BilliardGameDTO game : games) {
+            sb.append(String.format("[%d] %s %s\n", game.getId(), game.getName(), game.getDate()));
+            TextMessage msg = querySeriesGame(game.getId().toString());
+            sb.append(msg.getData() + "\n");
         }
+
+        textMessage.setData(sb.toString());
+
+        return textMessage;
+    }
+
+    @Handler(command = "比赛")
+    public TextMessage querySeriesGame(@Param("比赛ID") String id) {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("系列赛");
+        StringBuilder sb = new StringBuilder();
+
+        BilliardGameDTO game = billiardGameDAO.queryById(Long.valueOf(id));
+
+        sb.append(String.format("[%d] %s\n", game.getId(), game.getName()));
+        sb.append("  - 时间：" + game.getDate() + "\n");
+        sb.append("  - 地点：" + game.getLocation() + "\n");
+        sb.append("  - 选手：");
+
+        Map<Long, String> playerMap = new HashMap<>();
+
+        for (String userId : game.getPlayers().split(",")) {
+            playerMap.put(Long.valueOf(userId), userDAO.queryByUserId(Long.valueOf(userId)).getName());
+        }
+
+        sb.append(Joiner.on(",").join(playerMap.values()) + "\n");
+        if (StringUtils.isNotEmpty(game.getRemark())) {
+            sb.append("  - 说明：" + game.getRemark() + "\n");
+        }
+
+        textMessage.setHeader(sb.toString());
+
+        sb = new StringBuilder();
+
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryByGameId(Long.valueOf(id));
 
         for (BilliardRecordDTO br : brList) {
             List<String> players = new ArrayList<>();
@@ -242,36 +273,9 @@ public class BilliardController {
             for (int j = 0; j < loser.length; j++) {
                 lns[j] = playerMap.get(Long.valueOf(players.get(j + winner.length)));
             }
-            sb.append(gameTypeMap.get(br.getGameType()) + ": " + String.join(",", wns) + " "
+            sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) + " "
                     + String.valueOf(br.getScoreW())
                     + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
-        }
-
-        textMessage.setData(sb.toString());
-
-        return textMessage;
-    }
-
-    @Handler(command = "系列赛")
-    public TextMessage querySeriesGame() {
-        TextMessage textMessage = new TextMessage();
-        textMessage.setTitle("系列赛");
-        StringBuilder sb = new StringBuilder();
-
-        List<BilliardGameDTO> games = billiardGameDAO.queryAll();
-
-        for (BilliardGameDTO game : games) {
-            sb.append(String.format("[%d] %s\n", game.getId(), game.getName()));
-            sb.append("  - 地点：" + game.getLocation() + "\n");
-            sb.append("  - 选手：");
-            List<String> names = new ArrayList<>();
-            for (String userId : game.getPlayers().split(",")) {
-                names.add(userDAO.queryByUserId(Long.valueOf(userId)).getName());
-            }
-            sb.append(Joiner.on(",").join(names) + "\n");
-            if (StringUtils.isNotEmpty(game.getRemark())) {
-                sb.append("  - 说明：" + game.getRemark() + "\n");
-            }
         }
 
         textMessage.setData(sb.toString());
