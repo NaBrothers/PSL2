@@ -3,6 +3,7 @@ package com.nabrothers.psl.core.controller;
 import com.google.common.base.Joiner;
 import com.nabrothers.psl.core.dao.BilliardRecordDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
+import com.nabrothers.psl.core.dto.BilliardGameDTO;
 import com.nabrothers.psl.core.dto.BilliardRecordDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.sdk.annotation.Handler;
@@ -11,6 +12,7 @@ import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -204,7 +206,7 @@ public class BilliardController {
     }
 
     @Handler(command = "比赛")
-    public TextMessage queryByGameType() {
+    public TextMessage queryGame() {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("比赛记录");
         StringBuilder sb = new StringBuilder();
@@ -243,6 +245,32 @@ public class BilliardController {
 
         textMessage.setData(sb.toString());
 
+        return textMessage;
+    }
+
+    @Handler(command = "系列赛")
+    public TextMessage querySeriesGame() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("系列赛");
+        StringBuilder sb = new StringBuilder();
+
+        List<BilliardGameDTO> games = new ArrayList<>();
+
+        for (BilliardGameDTO game : games) {
+            sb.append(String.format("[%d] %s\n", game.getId(), game.getName()));
+            sb.append("  - 地点：" + game.getLocation() + "\n");
+            sb.append("  - 选手：");
+            List<String> names = new ArrayList<>();
+            for (String userId : game.getPlayers().split(",")) {
+                names.add(userDAO.queryByUserId(Long.valueOf(userId)).getName());
+            }
+            sb.append(Joiner.on(",").join(names) + "\n");
+            if (StringUtils.isNotEmpty(game.getRemark())) {
+                sb.append("  - 说明：" + game.getRemark() + "\n");
+            }
+        }
+
+        textMessage.setData(sb.toString());
         return textMessage;
     }
 }
