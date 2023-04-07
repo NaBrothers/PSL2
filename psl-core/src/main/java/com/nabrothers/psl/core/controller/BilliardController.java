@@ -223,7 +223,7 @@ public class BilliardController {
             sb.append(msg.getData() + "\n");
         }
 
-        textMessage.setData(sb.toString());
+        textMessage.setData(sb.toString() + "\n");
 
         return textMessage;
     }
