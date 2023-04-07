@@ -132,11 +132,14 @@ public class BilliardController {
 
         String[] winnerArray = winner.split(",|，");
         String[] loserArray = loser.split(",|，");
+        List<Long> winners = new ArrayList<>();
+        List<Long> losers = new ArrayList<>();
         for (int i = 0; i < winnerArray.length; i++) {
             UserDTO winnerDTO = userDAO.queryByAlias(winnerArray[i]);
             if (winnerDTO == null) {
                 return "参数错误";
             }
+            winners.add(winnerDTO.getId());
         }
 
         for (int i = 0; i < loserArray.length; i++) {
@@ -144,12 +147,13 @@ public class BilliardController {
             if (loserDTO == null) {
                 return "参数错误";
             }
+            losers.add(loserDTO.getId());
         }
 
         BilliardRecordDTO billiardRecordDTO = new BilliardRecordDTO();
         billiardRecordDTO.setGameType(typeGameMap.get(type));
-        billiardRecordDTO.setWinnerId(Joiner.on(',').join(winnerArray));
-        billiardRecordDTO.setLoserId(Joiner.on(',').join(loserArray));
+        billiardRecordDTO.setWinnerId(Joiner.on(',').join(winners));
+        billiardRecordDTO.setLoserId(Joiner.on(',').join(losers));
         billiardRecordDTO.setScoreW(Integer.valueOf(scoreW));
         billiardRecordDTO.setScoreL(Integer.valueOf(scoreL));
 
