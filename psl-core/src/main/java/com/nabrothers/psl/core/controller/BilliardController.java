@@ -1,6 +1,7 @@
 package com.nabrothers.psl.core.controller;
 
 import com.google.common.base.Joiner;
+import com.nabrothers.psl.core.dao.BilliardGameDAO;
 import com.nabrothers.psl.core.dao.BilliardRecordDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.BilliardGameDTO;
@@ -33,6 +34,9 @@ public class BilliardController {
 
     @Resource
     private BilliardRecordDAO billiardRecordDAO;
+
+    @Resource
+    private BilliardGameDAO billiardGameDAO;
 
     private static Map<Integer, String> gameTypeMap = new HashMap<>();
 
@@ -254,7 +258,7 @@ public class BilliardController {
         textMessage.setTitle("系列赛");
         StringBuilder sb = new StringBuilder();
 
-        List<BilliardGameDTO> games = new ArrayList<>();
+        List<BilliardGameDTO> games = billiardGameDAO.queryAll();
 
         for (BilliardGameDTO game : games) {
             sb.append(String.format("[%d] %s\n", game.getId(), game.getName()));
