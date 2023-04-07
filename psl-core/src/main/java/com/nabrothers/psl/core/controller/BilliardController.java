@@ -218,7 +218,7 @@ public class BilliardController {
         List<BilliardGameDTO> games = billiardGameDAO.queryAll();
 
         for (BilliardGameDTO game : games) {
-            sb.append(String.format("[%d] %s %s\n", game.getId(), game.getName(), game.getDate()));
+            sb.append(String.format("-- [%d] %s %s --\n", game.getId(), game.getName(), game.getDate()));
             TextMessage msg = querySeriesGame(game.getId().toString());
             sb.append(msg.getData() + "\n");
         }
@@ -237,9 +237,9 @@ public class BilliardController {
         BilliardGameDTO game = billiardGameDAO.queryById(Long.valueOf(id));
 
         sb.append(String.format("[%d] %s\n", game.getId(), game.getName()));
-        sb.append("  - 时间：" + game.getDate() + "\n");
-        sb.append("  - 地点：" + game.getLocation() + "\n");
-        sb.append("  - 选手：");
+        sb.append("- 时间：" + game.getDate() + "\n");
+        sb.append("- 地点：" + game.getLocation() + "\n");
+        sb.append("- 选手：");
 
         Map<Long, String> playerMap = new HashMap<>();
 
@@ -249,7 +249,7 @@ public class BilliardController {
 
         sb.append(Joiner.on(",").join(playerMap.values()) + "\n");
         if (StringUtils.isNotEmpty(game.getRemark())) {
-            sb.append("  - 说明：" + game.getRemark() + "\n");
+            sb.append("- 说明：" + game.getRemark() + "\n");
         }
 
         textMessage.setHeader(sb.toString());
