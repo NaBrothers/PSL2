@@ -191,7 +191,7 @@ public class BilliardController {
             }
         }
 
-        Map<BilliardGameDTO, List<BilliardRecordDTO>> records = new HashMap<>();
+        Map<Long, List<BilliardRecordDTO>> records = new TreeMap<>();
 
         for (BilliardRecordDTO br : brList) {
             List<String> players = new ArrayList<>();
@@ -208,8 +208,8 @@ public class BilliardController {
 
         Map<Long, Double> pointsDifferMap = getPointsDifferMap();
 
-        for (Map.Entry<BilliardGameDTO, List<BilliardRecordDTO>> record : records.entrySet()) {
-            BilliardGameDTO bg = record.getKey();
+        for (Map.Entry<Long, List<BilliardRecordDTO>> record : records.entrySet()) {
+            BilliardGameDTO bg = bgMap.get(record.getKey());
             sb.append(String.format("-- [%d] %s %s --\n", bg.getId(), bg.getName(), bg.getDate()));
             List<BilliardRecordDTO> brs = record.getValue();
             for (BilliardRecordDTO br : brs) {
