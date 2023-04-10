@@ -241,6 +241,7 @@ public class BilliardController {
                         + String.join(",", lns)
                         + " (" + scoreDiffer + ")" + "\n");
             }
+            sb.append("\n");
         }
 
         textMessage.setData(sb.toString());
