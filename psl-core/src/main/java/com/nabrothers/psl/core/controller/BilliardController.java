@@ -200,9 +200,8 @@ public class BilliardController {
             players.addAll(Arrays.asList(winner));
             players.addAll(Arrays.asList(loser));
             if (players.contains(String.valueOf(userid))) {
-                BilliardGameDTO bg = bgMap.get(br.getGameId());
-                records.putIfAbsent(bg, new ArrayList<>());
-                records.get(bg).add(br);
+                records.putIfAbsent(br.getGameId(), new ArrayList<>());
+                records.get(br.getGameId()).add(br);
             }
         }
 
