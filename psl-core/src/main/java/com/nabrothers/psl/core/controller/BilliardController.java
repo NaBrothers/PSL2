@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Handler(command = "台球")
@@ -175,6 +177,7 @@ public class BilliardController {
         textMessage.setTitle(userDTO.getName() + " 比赛记录");
         Long userid = userDTO.getUserId();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Map<Long, BilliardGameDTO> bgMap = billiardGameDAO.queryAll().stream().collect(Collectors.toMap(BilliardGameDTO::getId, Function.identity()));
         Map<Long, String> playerMap = new HashMap<>();
 
         for (BilliardRecordDTO br : brList) {
@@ -188,18 +191,37 @@ public class BilliardController {
             }
         }
 
+        Map<BilliardGameDTO, List<BilliardRecordDTO>> records = new HashMap<>();
+
         for (BilliardRecordDTO br : brList) {
-            double we = pointsDifferMap().get(br.getId());
-            Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(br.getGameType())));
-            Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
             List<String> players = new ArrayList<>();
             String[] winner = br.getWinnerId().split(",");
             String[] loser = br.getLoserId().split(",");
-            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
-            String scoreDiffer;
             players.addAll(Arrays.asList(winner));
             players.addAll(Arrays.asList(loser));
             if (players.contains(String.valueOf(userid))) {
+                BilliardGameDTO bg = bgMap.get(br.getGameId());
+                records.putIfAbsent(bg, new ArrayList<>());
+                records.get(bg).add(br);
+            }
+        }
+
+        Map<Long, Double> pointsDifferMap = getPointsDifferMap();
+
+        for (Map.Entry<BilliardGameDTO, List<BilliardRecordDTO>> record : records.entrySet()) {
+            BilliardGameDTO bg = record.getKey();
+            sb.append(String.format("-- [%d] %s %s --\n", bg.getId(), bg.getName(), bg.getDate()));
+            List<BilliardRecordDTO> brs = record.getValue();
+            for (BilliardRecordDTO br : brs) {
+                double we = pointsDifferMap.get(br.getId());
+                Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(br.getGameType())));
+                Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+
+                List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+                String scoreDiffer;
+                String[] winner = br.getWinnerId().split(",");
+                String[] loser = br.getLoserId().split(",");
+
                 String[] wns = new String[winner.length];
                 String[] lns = new String[loser.length];
                 for (int j = 0; j < winner.length; j++) {
@@ -208,15 +230,16 @@ public class BilliardController {
                 for (int j = 0; j < loser.length; j++) {
                     lns[j] = playerMap.get(Long.valueOf(loser[j]));
                 }
-                if(winners.contains(String.valueOf(userid))) {
+                if (winners.contains(String.valueOf(userid))) {
                     scoreDiffer = "+" + (int) (gameCo * (1 - we));
-                }else{
+                } else {
                     scoreDiffer = String.valueOf((int) (loserCo * (we - 1)));
                 }
-                sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) 
-                        + String.valueOf(br.getScoreW())
-                        + " - " + String.valueOf(br.getScoreL()) 
-                        + String.join(",", lns) + scoreDiffer + "\n");
+                sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns)
+                        + " " + String.valueOf(br.getScoreW())
+                        + " - " + String.valueOf(br.getScoreL()) + " "
+                        + String.join(",", lns)
+                        + " (" + scoreDiffer + ")" + "\n");
             }
         }
 
@@ -289,9 +312,9 @@ public class BilliardController {
             for (int j = 0; j < loser.length; j++) {
                 lns[j] = playerMap.get(Long.valueOf(players.get(j + winner.length)));
             }
-            sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) 
+            sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns)
                     + " " + String.valueOf(br.getScoreW()) + " - "
-                    + String.valueOf(br.getScoreL()) 
+                    + String.valueOf(br.getScoreL())
                     + " " + String.join(",", lns) + "\n");
         }
 
@@ -299,7 +322,7 @@ public class BilliardController {
         return textMessage;
     }
 
-    private Map<Long, Double> pointsDifferMap() {
+    private Map<Long, Double> getPointsDifferMap() {
         Map<Long, Double> pointsDiffMap = new HashMap<>();
         Map<Long, Integer> playersMap = new HashMap<>();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
