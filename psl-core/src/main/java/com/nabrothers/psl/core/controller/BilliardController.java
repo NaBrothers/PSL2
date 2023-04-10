@@ -189,9 +189,14 @@ public class BilliardController {
         }
 
         for (BilliardRecordDTO br : brList) {
+            double we = pointsDifferMap().get(br.getId());
+            Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(br.getGameType())));
+            Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
             List<String> players = new ArrayList<>();
             String[] winner = br.getWinnerId().split(",");
             String[] loser = br.getLoserId().split(",");
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            String scoreDiffer;
             players.addAll(Arrays.asList(winner));
             players.addAll(Arrays.asList(loser));
             if (players.contains(String.valueOf(userid))) {
@@ -203,9 +208,15 @@ public class BilliardController {
                 for (int j = 0; j < loser.length; j++) {
                     lns[j] = playerMap.get(Long.valueOf(loser[j]));
                 }
-                sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) + " "
+                if(winners.contains(String.valueOf(userid))) {
+                    scoreDiffer = "+" + (int) (gameCo * (1 - we));
+                }else{
+                    scoreDiffer = String.valueOf((int) (loserCo * (we - 1)));
+                }
+                sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) 
                         + String.valueOf(br.getScoreW())
-                        + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
+                        + " - " + String.valueOf(br.getScoreL()) 
+                        + String.join(",", lns) + scoreDiffer + "\n");
             }
         }
 
@@ -278,12 +289,64 @@ public class BilliardController {
             for (int j = 0; j < loser.length; j++) {
                 lns[j] = playerMap.get(Long.valueOf(players.get(j + winner.length)));
             }
-            sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) + " "
-                    + String.valueOf(br.getScoreW())
-                    + " - " + String.valueOf(br.getScoreL()) + " " + String.join(",", lns) + "\n");
+            sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns) 
+                    + " " + String.valueOf(br.getScoreW()) + " - "
+                    + String.valueOf(br.getScoreL()) 
+                    + " " + String.join(",", lns) + "\n");
         }
 
         textMessage.setData(sb.toString());
         return textMessage;
+    }
+
+    private Map<Long, Double> pointsDifferMap() {
+        Map<Long, Double> pointsDiffMap = new HashMap<>();
+        Map<Long, Integer> playersMap = new HashMap<>();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+
+        for (BilliardRecordDTO it : brList) {
+            Integer winnerPoints = 0;
+            String[] winnerArray = it.getWinnerId().split(",");
+            for (int i = 0; i < winnerArray.length; i++) {
+                Long userid = Long.valueOf(winnerArray[i]);
+                if (!playersMap.containsKey(userid)) {
+                    playersMap.put(userid, Integer.valueOf(cacheService.get("billiard", "originalPoints")));
+                }
+                winnerPoints += playersMap.get(userid);
+            }
+            winnerPoints /= winnerArray.length;
+
+            Integer loserPoints = 0;
+            String[] loserArray = it.getLoserId().split(",");
+            for (int i = 0; i < loserArray.length; i++) {
+                Long userid = Long.valueOf(loserArray[i]);
+                if (!playersMap.containsKey(userid)) {
+                    playersMap.put(userid, Integer.valueOf(cacheService.get("billiard", "originalPoints")));
+                }
+                loserPoints += playersMap.get(userid);
+            }
+            loserPoints /= loserArray.length;
+
+            double dr = winnerPoints - loserPoints;
+            double we = 1 / (Math.pow(10, (-dr / Integer.valueOf(cacheService.get("billiard", "weCo")))) + 1);
+
+            Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(it.getGameType())));
+
+            for (int i = 0; i < winnerArray.length; i++) {
+                Long userid = Long.valueOf(winnerArray[i]);
+                playersMap.put(userid,
+                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we))));
+            }
+
+            for (int i = 0; i < loserArray.length; i++) {
+                Long userid = Long.valueOf(loserArray[i]);
+                playersMap.put(userid, (int) Math.round((playersMap.get(userid)
+                        + Integer.valueOf(cacheService.get("billiard", "loserCo")) * (we - 1))));
+            }
+
+            pointsDiffMap.put(it.getId(), we);
+        }
+
+        return pointsDiffMap;
     }
 }
