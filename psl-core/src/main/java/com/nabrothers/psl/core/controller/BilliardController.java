@@ -9,15 +9,27 @@ import com.nabrothers.psl.core.dto.BilliardRecordDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
+import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
+import java.awt.Color;
+import java.awt.BasicStroke;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -206,6 +218,11 @@ public class BilliardController {
         }
 
         Map<Long, Double> pointsDifferMap = getPointsDifferMap();
+        Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+        Map<Integer, Integer> gameCoMap = new HashMap<>();
+        for(Integer gt : gameTypeMap.keySet()) {
+            gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
+        }
 
         for (Map.Entry<Long, List<BilliardRecordDTO>> record : records.entrySet()) {
             BilliardGameDTO bg = bgMap.get(record.getKey());
@@ -213,8 +230,7 @@ public class BilliardController {
             List<BilliardRecordDTO> brs = record.getValue();
             for (BilliardRecordDTO br : brs) {
                 double we = pointsDifferMap.get(br.getId());
-                Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(br.getGameType())));
-                Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+                Integer gameCo = gameCoMap.get(br.getGameType());                
 
                 List<String> winners = Arrays.asList(br.getWinnerId().split(","));
                 String scoreDiffer;
@@ -325,7 +341,16 @@ public class BilliardController {
     private Map<Long, Double> getPointsDifferMap() {
         Map<Long, Double> pointsDiffMap = new HashMap<>();
         Map<Long, Integer> playersMap = new HashMap<>();
+        Map<Integer, Integer> gameCoMap = new HashMap<>();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+
+        for(Integer gt : gameTypeMap.keySet()) {
+            gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
+        }
+
+        Integer op = Integer.valueOf(cacheService.get("billiard", "originalPoints"));
+        Integer weCo = Integer.valueOf(cacheService.get("billiard", "weCo"));
+        Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
 
         for (BilliardRecordDTO it : brList) {
             Integer winnerPoints = 0;
@@ -333,7 +358,7 @@ public class BilliardController {
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
                 if (!playersMap.containsKey(userid)) {
-                    playersMap.put(userid, Integer.valueOf(cacheService.get("billiard", "originalPoints")));
+                    playersMap.put(userid, op);
                 }
                 winnerPoints += playersMap.get(userid);
             }
@@ -344,16 +369,16 @@ public class BilliardController {
             for (int i = 0; i < loserArray.length; i++) {
                 Long userid = Long.valueOf(loserArray[i]);
                 if (!playersMap.containsKey(userid)) {
-                    playersMap.put(userid, Integer.valueOf(cacheService.get("billiard", "originalPoints")));
+                    playersMap.put(userid, op);
                 }
                 loserPoints += playersMap.get(userid);
             }
             loserPoints /= loserArray.length;
 
             double dr = winnerPoints - loserPoints;
-            double we = 1 / (Math.pow(10, (-dr / Integer.valueOf(cacheService.get("billiard", "weCo")))) + 1);
+            double we = 1 / (Math.pow(10, (-dr / weCo)) + 1);
 
-            Integer gameCo = Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(it.getGameType())));
+            Integer gameCo = gameCoMap.get(it.getGameType());
 
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
@@ -364,12 +389,87 @@ public class BilliardController {
             for (int i = 0; i < loserArray.length; i++) {
                 Long userid = Long.valueOf(loserArray[i]);
                 playersMap.put(userid, (int) Math.round((playersMap.get(userid)
-                        + Integer.valueOf(cacheService.get("billiard", "loserCo")) * (we - 1))));
+                        + loseCo * (we - 1))));
             }
 
             pointsDiffMap.put(it.getId(), we);
         }
 
         return pointsDiffMap;
+    }
+
+    @Handler(command = "积分曲线")
+    public ImageMessage showPlot() throws IOException {
+        ImageMessage message = new ImageMessage();
+        Map<Long, Double> pointsDiffMap = getPointsDifferMap();
+        Map<Long, String> playerMap = new HashMap<>();
+        Map<Integer, Integer> gameCoMap = new HashMap<>();
+
+        for(Integer gt : gameTypeMap.keySet()) {
+            gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
+        }
+        Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Map<Long, Map<Long, Integer>> changeList = new HashMap<>();
+        List<Long> gameSeq = new ArrayList<>();
+        gameSeq.add(0L);
+
+        for(BilliardRecordDTO br : brList) {
+            if(!gameSeq.contains(br.getId())) {
+                gameSeq.add(br.getId());
+            }
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            for(String winner : winners) {
+                long wid = Long.valueOf(winner);
+                playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
+                changeList.putIfAbsent(wid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(wid);
+                Integer point = (int)((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()));
+                change.put(br.getId(), point);
+            }
+            for(String loser : losers) {
+                long lid = Long.valueOf(loser);
+                playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
+                changeList.putIfAbsent(lid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(lid);
+                Integer point = (int)((pointsDiffMap.get(br.getId()) - 1) * loseCo);
+                change.put(br.getId(), point);
+            }
+        }
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for(Long id : changeList.keySet()) {
+            Map<Long, Integer> change = changeList.get(id);
+            Integer sum = 0;
+            for(Long gid : gameSeq) {
+                if(change.containsKey(gid)) {
+                    sum += change.get(gid);
+                }
+                dataset.addValue(sum, playerMap.get(id) + "        ", gid);
+            }            
+        }
+
+        JFreeChart chart = ChartFactory.createLineChart(
+                "积分曲线", 
+                "比赛", 
+                "积分", 
+                dataset, 
+                PlotOrientation.VERTICAL,
+                true, true, false);
+
+        chart.getPlot().setBackgroundPaint(Color.WHITE);
+        for(int i = 0; i < changeList.keySet().size(); i++) {
+            ((CategoryPlot) chart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(3.0f));
+        }
+
+        ((CategoryPlot) chart.getPlot()).getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.DOWN_45);
+
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * gameSeq.size(), 1024);
+        message.setUrl("cache/chart.jpg");
+
+        return message;
     }
 }
