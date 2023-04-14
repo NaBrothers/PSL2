@@ -30,6 +30,7 @@ import java.awt.Color;
 import java.awt.BasicStroke;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -171,7 +172,7 @@ public class BilliardController {
         billiardRecordDTO.setLoserId(Joiner.on(',').join(losers));
         billiardRecordDTO.setScoreW(Integer.valueOf(scoreW));
         billiardRecordDTO.setScoreL(Integer.valueOf(scoreL));
-
+        billiardRecordDTO.setGameId(Long.valueOf(cacheService.get("billiard", "currentGame")));
         billiardRecordDAO.insert(billiardRecordDTO);
 
         return "记录成功";
@@ -338,6 +339,29 @@ public class BilliardController {
         return textMessage;
     }
 
+    @Handler(command = "比赛 添加")
+    public String addSeriesGame(@Param("比赛名") String name, @Param("地点") String location, @Param("选手") String players) {
+        List<Long> users = new ArrayList<>();
+        for (String alias : players.split(",")) {
+            UserDTO user = userDAO.queryByAlias(alias);
+            if (user == null) {
+                continue;
+            }
+            users.add(user.getUserId());
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        BilliardGameDTO game = new BilliardGameDTO();
+        game.setName(name);
+        game.setLocation(location);
+        game.setPlayers(Joiner.on(",").join(users));
+        game.setDate(sdf.format(new Date()));
+        Long id = billiardGameDAO.insert(game);
+        if (id != null) {
+            cacheService.put("billiard", "currentGame", id.toString());
+        }
+        return "添加成功";
+    }
+
     private Map<Long, Double> getPointsDifferMap() {
         Map<Long, Double> pointsDiffMap = new HashMap<>();
         Map<Long, Integer> playersMap = new HashMap<>();
@@ -398,7 +422,7 @@ public class BilliardController {
         return pointsDiffMap;
     }
 
-    @Handler(command = "积分曲线")
+    @Handler(command = "积分")
     public ImageMessage showPlot() throws IOException {
         ImageMessage message = new ImageMessage();
         Map<Long, Double> pointsDiffMap = getPointsDifferMap();
