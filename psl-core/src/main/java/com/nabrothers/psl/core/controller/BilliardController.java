@@ -154,7 +154,7 @@ public class BilliardController {
             if (winnerDTO == null) {
                 return "参数错误";
             }
-            winners.add(winnerDTO.getId());
+            winners.add(winnerDTO.getUserId());
         }
 
         for (int i = 0; i < loserArray.length; i++) {
@@ -162,7 +162,7 @@ public class BilliardController {
             if (loserDTO == null) {
                 return "参数错误";
             }
-            losers.add(loserDTO.getId());
+            losers.add(loserDTO.getUserId());
         }
 
         BilliardRecordDTO billiardRecordDTO = new BilliardRecordDTO();
@@ -230,7 +230,7 @@ public class BilliardController {
             List<BilliardRecordDTO> brs = record.getValue();
             for (BilliardRecordDTO br : brs) {
                 double we = pointsDifferMap.get(br.getId());
-                Integer gameCo = gameCoMap.get(br.getGameType());                
+                Integer gameCo = gameCoMap.get(br.getGameType());
 
                 List<String> winners = Arrays.asList(br.getWinnerId().split(","));
                 String scoreDiffer;
@@ -449,14 +449,14 @@ public class BilliardController {
                     sum += change.get(gid);
                 }
                 dataset.addValue(sum, playerMap.get(id) + "        ", gid);
-            }            
+            }
         }
 
         JFreeChart chart = ChartFactory.createLineChart(
-                "积分曲线", 
-                "比赛", 
-                "积分", 
-                dataset, 
+                "积分曲线",
+                "比赛",
+                "积分",
+                dataset,
                 PlotOrientation.VERTICAL,
                 true, true, false);
 
