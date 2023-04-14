@@ -356,8 +356,8 @@ public class BilliardController {
         game.setPlayers(Joiner.on(",").join(users));
         game.setDate(sdf.format(new Date()));
         Long id = billiardGameDAO.insert(game);
-        if (id != null) {
-            cacheService.put("billiard", "currentGame", id.toString());
+        if (id > 0) {
+            cacheService.put("billiard", "currentGame", game.getId().toString());
         }
         return "添加成功";
     }
