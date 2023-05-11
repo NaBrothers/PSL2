@@ -1,6 +1,8 @@
 package com.nabrothers.psl.core.dao;
 
 import com.nabrothers.psl.core.dto.BilliardRecordDTO;
+
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;
@@ -21,4 +23,7 @@ public interface BilliardRecordDAO {
 
     @Select("select * from `BilliardRecord`")
     List<BilliardRecordDTO> queryAll();
+
+    @Delete("delete * from 'BilliardRecord' where id = #{id}")
+    void deleteById(Long id);
 }
