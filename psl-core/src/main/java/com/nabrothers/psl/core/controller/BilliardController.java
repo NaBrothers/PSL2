@@ -360,7 +360,9 @@ public class BilliardController {
         game.setDate(sdf.format(new Date()));
         Long id = billiardGameDAO.insert(game);
         if (id > 0) {
-            cacheService.put("billiard", "currentGame", game.getId().toString());
+            List<BilliardGameDTO> games = billiardGameDAO.queryAll();
+            Collections.sort(games, Comparator.comparing(BilliardGameDTO::getId));
+            cacheService.put("billiard", "currentGame", games.get(games.size() - 1).getId().toString());
         }
         return "添加成功";
     }
