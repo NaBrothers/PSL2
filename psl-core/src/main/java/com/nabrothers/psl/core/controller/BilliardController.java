@@ -14,6 +14,8 @@ import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 
+import javassist.compiler.ast.Pair;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
@@ -190,7 +192,8 @@ public class BilliardController {
         textMessage.setTitle(userDTO.getName() + " 比赛记录");
         Long userid = userDTO.getUserId();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
-        Map<Long, BilliardGameDTO> bgMap = billiardGameDAO.queryAll().stream().collect(Collectors.toMap(BilliardGameDTO::getId, Function.identity()));
+        Map<Long, BilliardGameDTO> bgMap = billiardGameDAO.queryAll().stream()
+                .collect(Collectors.toMap(BilliardGameDTO::getId, Function.identity()));
         Map<Long, String> playerMap = new HashMap<>();
 
         for (BilliardRecordDTO br : brList) {
@@ -221,7 +224,7 @@ public class BilliardController {
         Map<Long, Double> pointsDifferMap = getPointsDifferMap();
         Integer loserCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
         Map<Integer, Integer> gameCoMap = new HashMap<>();
-        for(Integer gt : gameTypeMap.keySet()) {
+        for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
 
@@ -370,7 +373,7 @@ public class BilliardController {
         Map<Integer, Integer> gameCoMap = new HashMap<>();
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
 
-        for(Integer gt : gameTypeMap.keySet()) {
+        for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
 
@@ -431,7 +434,7 @@ public class BilliardController {
         Map<Long, String> playerMap = new HashMap<>();
         Map<Integer, Integer> gameCoMap = new HashMap<>();
 
-        for(Integer gt : gameTypeMap.keySet()) {
+        for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
         Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
@@ -441,37 +444,37 @@ public class BilliardController {
         List<Long> gameSeq = new ArrayList<>();
         gameSeq.add(0L);
 
-        for(BilliardRecordDTO br : brList) {
-            if(!gameSeq.contains(br.getId())) {
+        for (BilliardRecordDTO br : brList) {
+            if (!gameSeq.contains(br.getId())) {
                 gameSeq.add(br.getId());
             }
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
-            for(String winner : winners) {
+            for (String winner : winners) {
                 long wid = Long.valueOf(winner);
                 playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
                 changeList.putIfAbsent(wid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(wid);
-                Integer point = (int)((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()));
+                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()));
                 change.put(br.getId(), point);
             }
-            for(String loser : losers) {
+            for (String loser : losers) {
                 long lid = Long.valueOf(loser);
                 playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
                 changeList.putIfAbsent(lid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(lid);
-                Integer point = (int)((pointsDiffMap.get(br.getId()) - 1) * loseCo);
+                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo);
                 change.put(br.getId(), point);
             }
         }
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-        for(Long id : changeList.keySet()) {
+        for (Long id : changeList.keySet()) {
             Map<Long, Integer> change = changeList.get(id);
             Integer sum = 0;
-            for(Long gid : gameSeq) {
-                if(change.containsKey(gid)) {
+            for (Long gid : gameSeq) {
+                if (change.containsKey(gid)) {
                     sum += change.get(gid);
                 }
                 dataset.addValue(sum, playerMap.get(id) + "        ", gid);
@@ -487,15 +490,73 @@ public class BilliardController {
                 true, true, false);
 
         chart.getPlot().setBackgroundPaint(Color.WHITE);
-        for(int i = 0; i < changeList.keySet().size(); i++) {
+        for (int i = 0; i < changeList.keySet().size(); i++) {
             ((CategoryPlot) chart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(3.0f));
         }
 
         ((CategoryPlot) chart.getPlot()).getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.DOWN_45);
 
-        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * gameSeq.size(), 1024);
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * gameSeq.size(),
+                1024);
         message.setUrl("cache/chart.jpg");
 
         return message;
+    }
+
+    @Handler(command = "删除记录")
+    public String delete(Long i) {
+        
+        billiardRecordDAO.deleteById(i);
+
+        return "删除成功";
+    }
+
+    @Handler(command = "胜率")
+    public TextMessage winRate() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("胜率");
+        StringBuilder sb = new StringBuilder();
+
+        Map<Long, Map<Integer, Integer[]>> playerMap = new HashMap<>();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        for (BilliardRecordDTO br : brList) {
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            
+            for (String wid : winners) {
+                Long winner = Long.valueOf(wid);
+                playerMap.putIfAbsent(winner, new HashMap<Integer, Integer[]>());
+                Map<Integer, Integer[]> valMap = playerMap.get(winner);
+                valMap.putIfAbsent(winners.size(), new Integer[] { 0, 0, 0 });
+                Integer[] val = valMap.get(winners.size());
+                val[0]++;
+                val[2] += br.getScoreW();
+            }
+            for (String lid : losers) {
+                Long loser = Long.valueOf(lid);
+                playerMap.putIfAbsent(loser, new HashMap<Integer, Integer[]>());
+                Map<Integer, Integer[]> valMap = playerMap.get(loser);
+                valMap.putIfAbsent(losers.size(), new Integer[] { 0, 0, 0 });
+                Integer[] val = valMap.get(losers.size());
+                val[1]++;
+                val[2] += br.getScoreL();
+            }
+        }
+
+        for (Long playerId : playerMap.keySet()) {
+            String name = userDAO.queryByUserId(playerId).getName();
+            sb.append(name + ": \n");
+            for (Integer type : playerMap.get(playerId).keySet()) {
+                Integer[] val = playerMap.get(playerId).get(type);
+                double score = (double) val[2] / ((double) val[0] + (double) val[1]);
+                double rate = (double) val[0] / ((double) val[0] + (double) val[1]) * 100;
+                sb.append(
+                        String.format("%d v %d: %d 胜 %d 负 %.2f%% 场均得分: %.2f \n", type, type, val[0], val[1], rate, score));
+            }
+        }
+
+        textMessage.setData(sb.toString());
+
+        return textMessage;
     }
 }
