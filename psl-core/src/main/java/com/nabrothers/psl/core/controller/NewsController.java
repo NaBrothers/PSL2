@@ -23,7 +23,7 @@ public class NewsController {
     @Resource
     private MessageService messageService;
 
-    @Scheduled(cron = "0 0 10 * * ?")
+    //@Scheduled(cron = "0 0 10 * * ?")
     @Hidden
     @Handler(command = "头条")
     public void dailyNews() {
