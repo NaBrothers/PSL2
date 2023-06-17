@@ -82,7 +82,7 @@ public class GambleController {
         TextMessage message = new TextMessage();
         message.setTitle("当前比赛");
         StringBuilder sb = new StringBuilder();
-        String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_zc");
+        String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_jc");
         JSONArray dateList = JSON.parseObject(retStr).getJSONObject("data").getJSONArray("list");
         for (Object dateObj : dateList) {
             JSONObject date = (JSONObject) dateObj;
@@ -220,7 +220,7 @@ public class GambleController {
 
     private void refreshMatchStatus() {
         try {
-            String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_zc");
+            String retStr = HttpUtils.doGet("https://guess.qiumibao.com/saishi/zbbList?type=football_jc");
             JSONArray dateList = JSON.parseObject(retStr).getJSONObject("data").getJSONArray("list");
             Set<Long> betRecordSet = new HashSet<>();
             for (Object dateObj : dateList) {
