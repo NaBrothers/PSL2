@@ -26,7 +26,7 @@ import javax.imageio.ImageIO;
 @Log4j2
 @Component
 public class ImageUtils {
-    private static int line_height = 18;
+    private static int line_height = 24;
     /**
      * 字体
      */
@@ -36,7 +36,7 @@ public class ImageUtils {
 
     private static final String FONT_PATH = "./assets/sarasa.ttf";
 
-    private static final int FONT_SIZE = 14;
+    private static final int FONT_SIZE = 18;
 
     private static final int LINE_CHAR_COUNT = 50*2; //每行最大字符数
 

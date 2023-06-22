@@ -17,23 +17,39 @@ import com.nabrothers.psl.sdk.service.MessageService;
 import javassist.compiler.ast.Pair;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.TriFunction;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.PolarPlot;
+import org.jfree.chart.plot.SpiderWebPlot;
+import org.jfree.chart.renderer.DefaultPolarItemRenderer;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.CategoryItemLabelGenerator;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.gantt.XYTaskDataset;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.BasicStroke;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -558,5 +574,238 @@ public class BilliardController {
         textMessage.setData(sb.toString());
 
         return textMessage;
+    }
+
+    @Handler(command = "胜率")
+    public TextMessage personalWinRate(@Param("选手") String username) {
+        TextMessage textMessage = new TextMessage();
+        StringBuilder sb = new StringBuilder();
+        UserDTO userDTO = userDAO.queryByAlias(username);
+        if (userDTO == null) {
+            textMessage.setData("无比赛记录");
+            return textMessage;
+        }
+        textMessage.setTitle(userDTO.getName() + " 胜率");
+
+        Map<Long, Integer[]> personalMatchResMap = new HashMap<>();
+        Map<Long, Integer[]> personalDoublesMatchResMap = new HashMap<>();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        for (BilliardRecordDTO br : brList) {
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            if (winners.size() == 1 && losers.size() == 1) {
+                if (!Long.valueOf(winners.get(0)).equals(userDTO.getUserId()) &&
+                    !Long.valueOf(losers.get(0)).equals(userDTO.getUserId())) continue;
+                boolean win = Long.valueOf(winners.get(0)).equals(userDTO.getUserId());
+                Long rivalId = Long.valueOf(win?losers.get(0):winners.get(0));
+                personalMatchResMap.putIfAbsent(rivalId, new Integer[]{0, 0});
+                Integer[] matchRes = personalMatchResMap.get(rivalId);
+                matchRes[1]++;
+                if (win) matchRes[0]++;
+            } else if (winners.size() == 2 && losers.size() == 2) {
+                if (!winners.contains(userDTO.getUserId().toString()) &&
+                    !losers.contains(userDTO.getUserId().toString())) continue;
+                boolean win = winners.contains(userDTO.getUserId().toString());
+                Long mateId = Long.valueOf(win
+                    ?
+                    winners.get(0).equals(userDTO.getUserId().toString())?winners.get(1):winners.get(0)
+                    :
+                    losers.get(0).equals(userDTO.getUserId().toString())?losers.get(1):losers.get(0));
+                personalDoublesMatchResMap.putIfAbsent(mateId, new Integer[]{0, 0});
+                Integer[] matchRes = personalDoublesMatchResMap.get(mateId);
+                matchRes[1]++;
+                if (win) matchRes[0]++;
+            } else continue;
+        }
+        sb.append("【单打胜率】\n");
+        for (Long playerId : personalMatchResMap.keySet()) {
+            String name = userDAO.queryByUserId(playerId).getName();
+            sb.append(name + ": ");
+            Integer[] val = personalMatchResMap.get(playerId);
+            double rate = (double) val[0] / ((double) val[1]) * 100;
+            sb.append(
+                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1]-val[0], rate));
+        }
+
+        sb.append("【双打胜率】\n");
+        for (Long playerId : personalDoublesMatchResMap.keySet()) {
+            String name = userDAO.queryByUserId(playerId).getName();
+            sb.append(name + ": ");
+            Integer[] val = personalDoublesMatchResMap.get(playerId);
+            double rate = (double) val[0] / ((double) val[1]) * 100;
+            sb.append(
+                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1]-val[0], rate));
+        }
+
+        textMessage.setData(sb.toString());
+
+        return textMessage;
+    }
+
+    @Handler(command = "荣誉")
+    public TextMessage honor() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("荣誉殿堂");
+        StringBuilder sb = new StringBuilder();
+
+        Map<Long, Integer[]> playerHonorMap = new HashMap<>();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+
+        for (BilliardRecordDTO br : brList) {
+            if (!gameTypeMap.get(br.getGameType()).equals("决赛")) continue;
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            for (String wid : winners) {
+                Long winner = Long.valueOf(wid);
+                playerHonorMap.putIfAbsent(winner, new Integer[]{0, 0});
+                Integer[] honorList = playerHonorMap.get(winner);
+                honorList[0]++;
+            }
+            for (String lid : losers) {
+                Long loser = Long.valueOf(lid);
+                playerHonorMap.putIfAbsent(loser, new Integer[]{0, 0});
+                Integer[] honorList = playerHonorMap.get(loser);
+                honorList[1]++;
+            }
+        }
+        for (Long playerId : playerHonorMap.keySet()) {
+            String name = userDAO.queryByUserId(playerId).getName();
+            sb.append(name + ": \n");
+            sb.append(StringUtils.repeat("❽", playerHonorMap.get(playerId)[0]));
+            sb.append(StringUtils.repeat("○", playerHonorMap.get(playerId)[1]));
+            sb.append("\n");
+        }
+        
+        textMessage.setData(sb.toString());
+        return textMessage;
+    }
+
+    @Handler(command = "能力")
+    public ImageMessage getRadarMap(@Param("选手") String username) throws IOException {
+        ImageMessage message = new ImageMessage();
+        UserDTO userDTO = userDAO.queryByAlias(username);
+        if (userDTO == null) {
+            return message;
+        }
+
+        double gameCount = 0;
+        double winGameCount = 0;
+        double unexpectedWinGameCount = 0;
+        double unexpectedLoseGameCount = 0;
+        double multiGameCount = 0;
+        double multiWinGameCount = 0;
+        double scoreSum = 0;
+        double rivalScoreSum = 0;
+        double winScoreDiffSum = 0;
+
+        double allGameCount = 0;
+        double allScoreSum = 0;
+        double allDiffSum = 0;
+        double allUnexpectedResGameCount = 0;
+
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        for (BilliardRecordDTO br : brList) {
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            int scoreW = br.getScoreW();
+            int scoreL = br.getScoreL();
+            allGameCount++;
+            allScoreSum += scoreW + scoreL;
+            allDiffSum += scoreW>scoreL?scoreW-scoreL:0;
+            allUnexpectedResGameCount += scoreW==8?0:1;
+            if (!winners.contains(userDTO.getUserId().toString()) &&
+                !losers.contains(userDTO.getUserId().toString())) continue;
+            gameCount++;
+            if(winners.contains(userDTO.getUserId().toString())) {
+                //win
+                winGameCount++;
+                scoreSum += scoreW;
+                rivalScoreSum += scoreL;
+                winScoreDiffSum += scoreW>scoreL?scoreW-scoreL:0;
+                unexpectedWinGameCount += scoreW==8?0:1;
+                if (winners.size() > 1) {
+                    multiGameCount++;
+                    multiWinGameCount++;
+                }
+            } else {
+                //lose
+                scoreSum += scoreL;
+                rivalScoreSum += scoreW;
+                unexpectedLoseGameCount += scoreW==8?0:1;
+                if (losers.size() > 1)
+                    multiGameCount++;
+            }
+        }
+
+        double max = 0;
+        double min = 0;
+        //normalization
+        TriFunction<Double, Double, Double, Double> normalize = (_val, _max, _min) -> 10*(_val-_min)/(_max-_min);
+        //score
+        double score = scoreSum/gameCount;
+        double avgScore = allScoreSum/allGameCount/2;
+        max = 8; min = 2*avgScore - 8;
+        double normalizedScore = normalize.apply(score, max, min);
+        //defence
+        double rivalScore = rivalScoreSum/gameCount;
+        double normalizedRivalScore = normalize.apply(rivalScore, max, min);
+        //press
+        double winScoreDiff = winScoreDiffSum/winGameCount;
+        double avgScoreDiff = allDiffSum/allGameCount;
+        max = 2*avgScoreDiff; min = 0;
+        double normalizedWinScoreDiff = normalize.apply(winScoreDiff, max, min);
+        //luck
+        double luckRate = unexpectedWinGameCount/winGameCount;
+        double avgLuckRate = allUnexpectedResGameCount/allGameCount;
+        max = 2*avgLuckRate; min = 0;
+        double normalizedLuckP = normalize.apply(luckRate, max, min);
+        //misfortune
+        double misfortuneRate = unexpectedLoseGameCount/(gameCount-winGameCount);
+        double normalizedMisfortuneP = normalize.apply(misfortuneRate, max, min);
+
+        if(normalizedScore<0) normalizedScore=0;
+        
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        dataset.addValue(normalizedScore, userDTO.getName(), "Score");
+        dataset.addValue(10-normalizedRivalScore, userDTO.getName(), "Defence");
+        dataset.addValue(normalizedWinScoreDiff, userDTO.getName(), "Press");
+        dataset.addValue(normalizedLuckP, userDTO.getName(), "Luck");
+        dataset.addValue(normalizedMisfortuneP, userDTO.getName(), "Misfortune");
+        dataset.addValue(multiWinGameCount/multiGameCount*10, userDTO.getName(), "Teamwork");
+        dataset.addValue(winGameCount/gameCount*10, userDTO.getName(), "Winning rate");
+
+        
+        dataset.addValue(5, "AVG", "Score");
+        dataset.addValue(5, "AVG", "Defence");
+        dataset.addValue(5, "AVG", "Press");
+        dataset.addValue(5, "AVG", "Luck");
+        dataset.addValue(5, "AVG", "Misfortune");
+        dataset.addValue(5, "AVG", "Teamwork");
+        dataset.addValue(5, "AVG", "Winning rate");
+        
+        dataset.addValue(10, "outline", "Score");
+        dataset.addValue(10, "outline", "Defence");
+        dataset.addValue(10, "outline", "Press");
+        dataset.addValue(10, "outline", "Luck");
+        dataset.addValue(10, "outline", "Misfortune");
+        dataset.addValue(10, "outline", "Teamwork");
+        dataset.addValue(10, "outline", "Winning rate");
+
+        SpiderWebPlot spiderWebPlot = new SpiderWebPlot(dataset);
+        spiderWebPlot.setMaxValue(10);
+        spiderWebPlot.setBackgroundPaint(Color.WHITE);
+        spiderWebPlot.setSeriesOutlineStroke(dataset.getRowIndex("AVG"), new BasicStroke(2.0F, 1, 1, 1.0F, new float[] {30F, 12F}, 0.0F));
+        spiderWebPlot.setSeriesPaint(dataset.getRowIndex("outline"), Color.BLACK);
+        spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex("outline"), Color.BLACK);
+        
+        JFreeChart chart = new JFreeChart("Ability Radar Chart", spiderWebPlot);
+
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 600,
+                600);
+        message.setUrl("cache/chart.jpg");
+
+        return message;
     }
 }
