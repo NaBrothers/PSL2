@@ -761,37 +761,39 @@ public class BilliardController {
         double normalizedLuckP = normalize.apply(luckRate, max, min);
         //misfortune
         double misfortuneRate = unexpectedLoseGameCount/(gameCount-winGameCount);
-        double normalizedMisfortuneP = normalize.apply(misfortuneRate, max, min);
+        double normalizedMisfortuneP = normalize.apply(misfortuneRate, min, max);
 
         if(normalizedScore<0) normalizedScore=0;
-        
+        if(normalizedRivalScore<0) normalizedRivalScore=0;
+        if(normalizedWinScoreDiff<0) normalizedWinScoreDiff=0;
+        if(normalizedLuckP<0) normalizedLuckP=0;
+        if(normalizedMisfortuneP<0) normalizedMisfortuneP=0;
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        dataset.addValue(normalizedScore, userDTO.getName(), "Score");
-        dataset.addValue(10-normalizedRivalScore, userDTO.getName(), "Defence");
-        dataset.addValue(normalizedWinScoreDiff, userDTO.getName(), "Press");
-        dataset.addValue(normalizedLuckP, userDTO.getName(), "Luck");
-        dataset.addValue(normalizedMisfortuneP, userDTO.getName(), "Misfortune");
-        dataset.addValue(multiWinGameCount/multiGameCount*10, userDTO.getName(), "Teamwork");
-        dataset.addValue(winGameCount/gameCount*10, userDTO.getName(), "Winning rate");
-
-        
-        dataset.addValue(5, "AVG", "Score");
-        dataset.addValue(5, "AVG", "Defence");
-        dataset.addValue(5, "AVG", "Press");
-        dataset.addValue(5, "AVG", "Luck");
-        dataset.addValue(5, "AVG", "Misfortune");
-        dataset.addValue(5, "AVG", "Teamwork");
-        dataset.addValue(5, "AVG", "Winning rate");
         
         dataset.addValue(10, "outline", "Score");
         dataset.addValue(10, "outline", "Defence");
         dataset.addValue(10, "outline", "Press");
         dataset.addValue(10, "outline", "Luck");
-        dataset.addValue(10, "outline", "Misfortune");
+        dataset.addValue(10, "outline", "Ball control");
         dataset.addValue(10, "outline", "Teamwork");
         dataset.addValue(10, "outline", "Winning rate");
+        
+        dataset.addValue(5, "AVG", "Score");
+        dataset.addValue(5, "AVG", "Defence");
+        dataset.addValue(5, "AVG", "Press");
+        dataset.addValue(5, "AVG", "Luck");
+        dataset.addValue(5, "AVG", "Ball control");
+        dataset.addValue(5, "AVG", "Teamwork");
+        dataset.addValue(5, "AVG", "Winning rate");
+
+        dataset.addValue(normalizedScore, userDTO.getName(), "Score");
+        dataset.addValue(10-normalizedRivalScore, userDTO.getName(), "Defence");
+        dataset.addValue(normalizedWinScoreDiff, userDTO.getName(), "Press");
+        dataset.addValue(normalizedLuckP, userDTO.getName(), "Luck");
+        dataset.addValue(normalizedMisfortuneP, userDTO.getName(), "Ball control");
+        dataset.addValue(multiWinGameCount/multiGameCount*10, userDTO.getName(), "Teamwork");
+        dataset.addValue(winGameCount/gameCount*10, userDTO.getName(), "Winning rate");
 
         SpiderWebPlot spiderWebPlot = new SpiderWebPlot(dataset);
         spiderWebPlot.setMaxValue(10);
@@ -799,6 +801,10 @@ public class BilliardController {
         spiderWebPlot.setSeriesOutlineStroke(dataset.getRowIndex("AVG"), new BasicStroke(2.0F, 1, 1, 1.0F, new float[] {30F, 12F}, 0.0F));
         spiderWebPlot.setSeriesPaint(dataset.getRowIndex("outline"), Color.BLACK);
         spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex("outline"), Color.BLACK);
+        spiderWebPlot.setSeriesPaint(dataset.getRowIndex("AVG"), Color.BLUE);
+        spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex("AVG"), Color.BLUE);
+        spiderWebPlot.setSeriesPaint(dataset.getRowIndex(userDTO.getName()), Color.RED);
+        spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex(userDTO.getName()), Color.RED);
         
         JFreeChart chart = new JFreeChart("Ability Radar Chart", spiderWebPlot);
 

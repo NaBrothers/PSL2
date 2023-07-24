@@ -307,8 +307,9 @@ public class HttpUtils {
                 .build();
         httpPost.setConfig(requestConfig);
         httpPost.setHeader("Content-type", "application/json");
+	httpPost.setHeader("accept", "*/*");
         httpPost.setHeader("DataEncoding", "UTF-8");
-        httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1");
+        httpPost.setHeader("User-Agent", UA_LIST.get(new Random().nextInt(UA_LIST.size())));
 
         CloseableHttpResponse httpResponse = null;
         try {
