@@ -13,43 +13,25 @@ import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
-
-import javassist.compiler.ast.Pair;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.PolarPlot;
-import org.jfree.chart.plot.SpiderWebPlot;
-import org.jfree.chart.renderer.DefaultPolarItemRenderer;
-import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.axis.CategoryLabelPositions;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.labels.CategoryItemLabelGenerator;
-import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.SpiderWebPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.gantt.XYTaskDataset;
-import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.BasicStroke;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -123,13 +105,13 @@ public class BilliardController {
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
                 playersMap.put(userid,
-                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we))));
+                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we)) / winnerArray.length));
             }
 
             for (int i = 0; i < loserArray.length; i++) {
                 Long userid = Long.valueOf(loserArray[i]);
-                playersMap.put(userid, (int) Math.round((playersMap.get(userid)
-                        + Integer.valueOf(cacheService.get("billiard", "loserCo")) * (we - 1))));
+                playersMap.put(userid, (int) Math.round(playersMap.get(userid)
+                        + Integer.valueOf(cacheService.get("billiard", "loserCo")) * (we - 1) / loserArray.length));
             }
         }
 
@@ -154,7 +136,7 @@ public class BilliardController {
 
     @Handler(command = "记录")
     public String billiardRecord(@Param("比赛类型") String type, @Param("胜者") String winner, @Param("胜者得分") String scoreW,
-            @Param("败者") String loser, @Param("败者得分") String scoreL) {
+                                 @Param("败者") String loser, @Param("败者得分") String scoreL) {
 
         if (!typeGameMap.containsKey(type)) {
             return "参数错误";
@@ -266,9 +248,9 @@ public class BilliardController {
                     lns[j] = playerMap.get(Long.valueOf(loser[j]));
                 }
                 if (winners.contains(String.valueOf(userid))) {
-                    scoreDiffer = "+" + (int) (gameCo * (1 - we));
+                    scoreDiffer = "+" + (int) (gameCo * (1 - we) / winner.length);
                 } else {
-                    scoreDiffer = String.valueOf((int) (loserCo * (we - 1)));
+                    scoreDiffer = String.valueOf((int) (loserCo * (we - 1) / loser.length));
                 }
                 sb.append("[" + gameTypeMap.get(br.getGameType()) + "] " + String.join(",", wns)
                         + " " + String.valueOf(br.getScoreW())
@@ -428,13 +410,13 @@ public class BilliardController {
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
                 playersMap.put(userid,
-                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we))));
+                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we) / winnerArray.length)));
             }
 
             for (int i = 0; i < loserArray.length; i++) {
                 Long userid = Long.valueOf(loserArray[i]);
                 playersMap.put(userid, (int) Math.round((playersMap.get(userid)
-                        + loseCo * (we - 1))));
+                        + loseCo * (we - 1) / loserArray.length)));
             }
 
             pointsDiffMap.put(it.getId(), we);
@@ -471,7 +453,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
                 changeList.putIfAbsent(wid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(wid);
-                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()));
+                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
                 change.put(br.getId(), point);
             }
             for (String loser : losers) {
@@ -479,7 +461,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
                 changeList.putIfAbsent(lid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(lid);
-                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo);
+                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
                 change.put(br.getId(), point);
             }
         }
@@ -521,7 +503,7 @@ public class BilliardController {
 
     @Handler(command = "删除记录")
     public String delete(Long i) {
-        
+
         billiardRecordDAO.deleteById(i);
 
         return "删除成功";
@@ -538,12 +520,12 @@ public class BilliardController {
         for (BilliardRecordDTO br : brList) {
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
-            
+
             for (String wid : winners) {
                 Long winner = Long.valueOf(wid);
                 playerMap.putIfAbsent(winner, new HashMap<Integer, Integer[]>());
                 Map<Integer, Integer[]> valMap = playerMap.get(winner);
-                valMap.putIfAbsent(winners.size(), new Integer[] { 0, 0, 0 });
+                valMap.putIfAbsent(winners.size(), new Integer[]{0, 0, 0});
                 Integer[] val = valMap.get(winners.size());
                 val[0]++;
                 val[2] += br.getScoreW();
@@ -552,7 +534,7 @@ public class BilliardController {
                 Long loser = Long.valueOf(lid);
                 playerMap.putIfAbsent(loser, new HashMap<Integer, Integer[]>());
                 Map<Integer, Integer[]> valMap = playerMap.get(loser);
-                valMap.putIfAbsent(losers.size(), new Integer[] { 0, 0, 0 });
+                valMap.putIfAbsent(losers.size(), new Integer[]{0, 0, 0});
                 Integer[] val = valMap.get(losers.size());
                 val[1]++;
                 val[2] += br.getScoreL();
@@ -595,22 +577,22 @@ public class BilliardController {
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
             if (winners.size() == 1 && losers.size() == 1) {
                 if (!Long.valueOf(winners.get(0)).equals(userDTO.getUserId()) &&
-                    !Long.valueOf(losers.get(0)).equals(userDTO.getUserId())) continue;
+                        !Long.valueOf(losers.get(0)).equals(userDTO.getUserId())) continue;
                 boolean win = Long.valueOf(winners.get(0)).equals(userDTO.getUserId());
-                Long rivalId = Long.valueOf(win?losers.get(0):winners.get(0));
+                Long rivalId = Long.valueOf(win ? losers.get(0) : winners.get(0));
                 personalMatchResMap.putIfAbsent(rivalId, new Integer[]{0, 0});
                 Integer[] matchRes = personalMatchResMap.get(rivalId);
                 matchRes[1]++;
                 if (win) matchRes[0]++;
             } else if (winners.size() == 2 && losers.size() == 2) {
                 if (!winners.contains(userDTO.getUserId().toString()) &&
-                    !losers.contains(userDTO.getUserId().toString())) continue;
+                        !losers.contains(userDTO.getUserId().toString())) continue;
                 boolean win = winners.contains(userDTO.getUserId().toString());
                 Long mateId = Long.valueOf(win
-                    ?
-                    winners.get(0).equals(userDTO.getUserId().toString())?winners.get(1):winners.get(0)
-                    :
-                    losers.get(0).equals(userDTO.getUserId().toString())?losers.get(1):losers.get(0));
+                        ?
+                        winners.get(0).equals(userDTO.getUserId().toString()) ? winners.get(1) : winners.get(0)
+                        :
+                        losers.get(0).equals(userDTO.getUserId().toString()) ? losers.get(1) : losers.get(0));
                 personalDoublesMatchResMap.putIfAbsent(mateId, new Integer[]{0, 0});
                 Integer[] matchRes = personalDoublesMatchResMap.get(mateId);
                 matchRes[1]++;
@@ -624,7 +606,7 @@ public class BilliardController {
             Integer[] val = personalMatchResMap.get(playerId);
             double rate = (double) val[0] / ((double) val[1]) * 100;
             sb.append(
-                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1]-val[0], rate));
+                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1] - val[0], rate));
         }
 
         sb.append("【双打胜率】\n");
@@ -634,7 +616,7 @@ public class BilliardController {
             Integer[] val = personalDoublesMatchResMap.get(playerId);
             double rate = (double) val[0] / ((double) val[1]) * 100;
             sb.append(
-                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1]-val[0], rate));
+                    String.format("%d 胜 %d 负 %.2f%%\n", val[0], val[1] - val[0], rate));
         }
 
         textMessage.setData(sb.toString());
@@ -675,7 +657,7 @@ public class BilliardController {
             sb.append(StringUtils.repeat("○", playerHonorMap.get(playerId)[1]));
             sb.append("\n");
         }
-        
+
         textMessage.setData(sb.toString());
         return textMessage;
     }
@@ -711,18 +693,18 @@ public class BilliardController {
             int scoreL = br.getScoreL();
             allGameCount++;
             allScoreSum += scoreW + scoreL;
-            allDiffSum += scoreW>scoreL?scoreW-scoreL:0;
-            allUnexpectedResGameCount += scoreW==8?0:1;
+            allDiffSum += scoreW > scoreL ? scoreW - scoreL : 0;
+            allUnexpectedResGameCount += scoreW == 8 ? 0 : 1;
             if (!winners.contains(userDTO.getUserId().toString()) &&
-                !losers.contains(userDTO.getUserId().toString())) continue;
+                    !losers.contains(userDTO.getUserId().toString())) continue;
             gameCount++;
-            if(winners.contains(userDTO.getUserId().toString())) {
+            if (winners.contains(userDTO.getUserId().toString())) {
                 //win
                 winGameCount++;
                 scoreSum += scoreW;
                 rivalScoreSum += scoreL;
-                winScoreDiffSum += scoreW>scoreL?scoreW-scoreL:0;
-                unexpectedWinGameCount += scoreW==8?0:1;
+                winScoreDiffSum += scoreW > scoreL ? scoreW - scoreL : 0;
+                unexpectedWinGameCount += scoreW == 8 ? 0 : 1;
                 if (winners.size() > 1) {
                     multiGameCount++;
                     multiWinGameCount++;
@@ -731,7 +713,7 @@ public class BilliardController {
                 //lose
                 scoreSum += scoreL;
                 rivalScoreSum += scoreW;
-                unexpectedLoseGameCount += scoreW==8?0:1;
+                unexpectedLoseGameCount += scoreW == 8 ? 0 : 1;
                 if (losers.size() > 1)
                     multiGameCount++;
             }
@@ -740,37 +722,40 @@ public class BilliardController {
         double max = 0;
         double min = 0;
         //normalization
-        TriFunction<Double, Double, Double, Double> normalize = (_val, _max, _min) -> 10*(_val-_min)/(_max-_min);
+        TriFunction<Double, Double, Double, Double> normalize = (_val, _max, _min) -> 10 * (_val - _min) / (_max - _min);
         //score
-        double score = scoreSum/gameCount;
-        double avgScore = allScoreSum/allGameCount/2;
-        max = 8; min = 2*avgScore - 8;
+        double score = scoreSum / gameCount;
+        double avgScore = allScoreSum / allGameCount / 2;
+        max = 8;
+        min = 2 * avgScore - 8;
         double normalizedScore = normalize.apply(score, max, min);
         //defence
-        double rivalScore = rivalScoreSum/gameCount;
+        double rivalScore = rivalScoreSum / gameCount;
         double normalizedRivalScore = normalize.apply(rivalScore, max, min);
         //press
-        double winScoreDiff = winScoreDiffSum/winGameCount;
-        double avgScoreDiff = allDiffSum/allGameCount;
-        max = 2*avgScoreDiff; min = 0;
+        double winScoreDiff = winScoreDiffSum / winGameCount;
+        double avgScoreDiff = allDiffSum / allGameCount;
+        max = 2 * avgScoreDiff;
+        min = 0;
         double normalizedWinScoreDiff = normalize.apply(winScoreDiff, max, min);
         //luck
-        double luckRate = unexpectedWinGameCount/winGameCount;
-        double avgLuckRate = allUnexpectedResGameCount/allGameCount;
-        max = 2*avgLuckRate; min = 0;
+        double luckRate = unexpectedWinGameCount / winGameCount;
+        double avgLuckRate = allUnexpectedResGameCount / allGameCount;
+        max = 2 * avgLuckRate;
+        min = 0;
         double normalizedLuckP = normalize.apply(luckRate, max, min);
         //misfortune
-        double misfortuneRate = unexpectedLoseGameCount/(gameCount-winGameCount);
+        double misfortuneRate = unexpectedLoseGameCount / (gameCount - winGameCount);
         double normalizedMisfortuneP = normalize.apply(misfortuneRate, min, max);
 
-        if(normalizedScore<0) normalizedScore=0;
-        if(normalizedRivalScore<0) normalizedRivalScore=0;
-        if(normalizedWinScoreDiff<0) normalizedWinScoreDiff=0;
-        if(normalizedLuckP<0) normalizedLuckP=0;
-        if(normalizedMisfortuneP<0) normalizedMisfortuneP=0;
+        if (normalizedScore < 0) normalizedScore = 0;
+        if (normalizedRivalScore < 0) normalizedRivalScore = 0;
+        if (normalizedWinScoreDiff < 0) normalizedWinScoreDiff = 0;
+        if (normalizedLuckP < 0) normalizedLuckP = 0;
+        if (normalizedMisfortuneP < 0) normalizedMisfortuneP = 0;
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        
+
         dataset.addValue(10, "outline", "Score");
         dataset.addValue(10, "outline", "Defence");
         dataset.addValue(10, "outline", "Press");
@@ -778,7 +763,7 @@ public class BilliardController {
         dataset.addValue(10, "outline", "Ball control");
         dataset.addValue(10, "outline", "Teamwork");
         dataset.addValue(10, "outline", "Winning rate");
-        
+
         dataset.addValue(5, "AVG", "Score");
         dataset.addValue(5, "AVG", "Defence");
         dataset.addValue(5, "AVG", "Press");
@@ -788,24 +773,24 @@ public class BilliardController {
         dataset.addValue(5, "AVG", "Winning rate");
 
         dataset.addValue(normalizedScore, userDTO.getName(), "Score");
-        dataset.addValue(10-normalizedRivalScore, userDTO.getName(), "Defence");
+        dataset.addValue(10 - normalizedRivalScore, userDTO.getName(), "Defence");
         dataset.addValue(normalizedWinScoreDiff, userDTO.getName(), "Press");
         dataset.addValue(normalizedLuckP, userDTO.getName(), "Luck");
         dataset.addValue(normalizedMisfortuneP, userDTO.getName(), "Ball control");
-        dataset.addValue(multiWinGameCount/multiGameCount*10, userDTO.getName(), "Teamwork");
-        dataset.addValue(winGameCount/gameCount*10, userDTO.getName(), "Winning rate");
+        dataset.addValue(multiWinGameCount / multiGameCount * 10, userDTO.getName(), "Teamwork");
+        dataset.addValue(winGameCount / gameCount * 10, userDTO.getName(), "Winning rate");
 
         SpiderWebPlot spiderWebPlot = new SpiderWebPlot(dataset);
         spiderWebPlot.setMaxValue(10);
         spiderWebPlot.setBackgroundPaint(Color.WHITE);
-        spiderWebPlot.setSeriesOutlineStroke(dataset.getRowIndex("AVG"), new BasicStroke(2.0F, 1, 1, 1.0F, new float[] {30F, 12F}, 0.0F));
+        spiderWebPlot.setSeriesOutlineStroke(dataset.getRowIndex("AVG"), new BasicStroke(2.0F, 1, 1, 1.0F, new float[]{30F, 12F}, 0.0F));
         spiderWebPlot.setSeriesPaint(dataset.getRowIndex("outline"), Color.BLACK);
         spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex("outline"), Color.BLACK);
         spiderWebPlot.setSeriesPaint(dataset.getRowIndex("AVG"), Color.BLUE);
         spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex("AVG"), Color.BLUE);
         spiderWebPlot.setSeriesPaint(dataset.getRowIndex(userDTO.getName()), Color.RED);
         spiderWebPlot.setSeriesOutlinePaint(dataset.getRowIndex(userDTO.getName()), Color.RED);
-        
+
         JFreeChart chart = new JFreeChart("Ability Radar Chart", spiderWebPlot);
 
         ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 600,
