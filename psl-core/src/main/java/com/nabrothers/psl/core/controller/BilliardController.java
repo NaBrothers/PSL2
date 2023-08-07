@@ -105,7 +105,7 @@ public class BilliardController {
             for (int i = 0; i < winnerArray.length; i++) {
                 Long userid = Long.valueOf(winnerArray[i]);
                 playersMap.put(userid,
-                        (int) Math.round((playersMap.get(userid) + gameCo * (1 - we)) / winnerArray.length));
+                        (int) Math.round(playersMap.get(userid) + (gameCo * (1 - we)) / winnerArray.length));
             }
 
             for (int i = 0; i < loserArray.length; i++) {
