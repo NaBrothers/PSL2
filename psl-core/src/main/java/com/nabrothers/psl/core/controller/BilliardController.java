@@ -734,17 +734,17 @@ public class BilliardController {
         double normalizedRivalScore = normalize.apply(rivalScore, max, min);
         //press
         double winScoreDiff = winScoreDiffSum / gameCount;
-        double avgScoreDiff = allDiffSum / allGameCount;
+        double avgScoreDiff = allDiffSum / allGameCount / 2;
         max = 2 * avgScoreDiff;
         min = 0;
         double normalizedWinScoreDiff = normalize.apply(winScoreDiff, max, min);
         //luck
         double luckRate = unexpectedWinGameCount / gameCount;
-        double avgLuckRate = allUnexpectedResGameCount / allGameCount;
+        double avgLuckRate = allUnexpectedResGameCount / allGameCount / 2;
         max = 2 * avgLuckRate;
         min = 0;
         double normalizedLuckP = normalize.apply(luckRate, max, min);
-        //misfortune
+        //ball controll
         double misfortuneRate = unexpectedLoseGameCount / gameCount;
         double normalizedMisfortuneP = normalize.apply(misfortuneRate, min, max);
 
