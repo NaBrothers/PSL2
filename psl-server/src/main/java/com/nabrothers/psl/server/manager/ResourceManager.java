@@ -28,7 +28,7 @@ public class ResourceManager {
                     Process process1 = Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd1});
                     waitForReturn(process1);
 
-                    String cmd2 = String.format("mv %s %s", "./psl-server/target/classes/plugin.properties", "./psl-server/target/plugins/" + name+ ".plugin.properties");
+                    String cmd2 = String.format("cp %s %s", "./psl-server/target/classes/plugin.properties", "./psl-server/target/plugins/" + name+ ".plugin.properties");
                     System.out.println(String.format("[%s] 复制plugin.properties: %s", name, cmd2));
                     Process process2 = Runtime.getRuntime().exec(cmd2);
                     waitForReturn(process2);
