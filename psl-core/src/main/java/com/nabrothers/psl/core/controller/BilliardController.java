@@ -1,14 +1,11 @@
 package com.nabrothers.psl.core.controller;
 
 import com.google.common.base.Joiner;
-import com.nabrothers.psl.core.dao.BilliardConsumeDAO;
 import com.nabrothers.psl.core.dao.BilliardGameDAO;
 import com.nabrothers.psl.core.dao.BilliardRecordDAO;
-import com.nabrothers.psl.core.dao.BilliardShareHolderDAO;
 import com.nabrothers.psl.core.dao.UserDAO;
 import com.nabrothers.psl.core.dto.BilliardGameDTO;
 import com.nabrothers.psl.core.dto.BilliardRecordDTO;
-import com.nabrothers.psl.core.dto.BilliardShareHolderDTO;
 import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
@@ -69,12 +66,6 @@ public class BilliardController {
 
         gameTypeMap.entrySet().stream().forEach(entry -> typeGameMap.put(entry.getValue(), entry.getKey()));
     }
-
-    @Resource
-    private BilliardShareHolderDAO billiardShareHolderDAO;
-
-    @Resource
-    private BilliardConsumeDAO billiardConsumeDAO;
 
     private String calcScoreBoard(Map<Long, Integer> playersMap, List<BilliardRecordDTO> brList) {
         for (BilliardRecordDTO it : brList) {
@@ -849,62 +840,4 @@ public class BilliardController {
         return message;
     }
 
-    @Handler(command = "股东")
-    public TextMessage shareHolder(){
-        TextMessage textMessage = new TextMessage();
-        textMessage.setTitle("GBL股东");
-        List<BilliardShareHolderDTO> shareHolders = billiardShareHolderDAO.queryAll();
-        StringBuilder sb = new StringBuilder();
-        for(BilliardShareHolderDTO sh : shareHolders){
-            String name = userDAO.queryByUserId(sh.getShareHolderId()).getName();
-            Double balance = sh.getBalance();
-            sb.append(name + "\t" + "余额: " + balance + "\n");
-        }
-        return textMessage;
-    }
-
-    @Handler(command = "股东 添加")
-    public String addShareHolder(@Param("新股东") String shareHolder, @Param("金额") String amount){
-        if(Double.parseDouble(amount) <= 0){
-            return "金额错误";
-        }
-        UserDTO newSH = userDAO.queryByAlias(shareHolder);
-        if(newSH == null){
-            return "用户不存在";
-        }
-        Long newShareHolderId = newSH.getUserId();        
-        BilliardShareHolderDTO newShareHolder = new BilliardShareHolderDTO();
-        newShareHolder.setShareHolderId(newShareHolderId);
-        newShareHolder.setBalance(Double.parseDouble(amount));
-        billiardShareHolderDAO.insert(newShareHolder);
-        return "添加成功";
-    }
-
-    @Handler(command = "消费")
-    public String consume(@Param("参与者") String participant, @Param("消费时长") String consumption){
-        List<BilliardShareHolderDTO> shareHolders = billiardShareHolderDAO.queryAll();
-        Map<Long, Double> shMap = new HashMap<>();
-        for(BilliardShareHolderDTO sh : shareHolders){
-            shMap.put(sh.getShareHolderId(), sh.getBalance());
-        }
-        List<String> participants = Arrays.asList(participant.split(","));
-        Double toPay = Double.parseDouble(consumption) / participants.size();
-        Integer i = 0;
-        List<Long> shIdList = new ArrayList<Long>();
-        for(String par : participants){
-            Long shId = userDAO.queryByAlias(par).getUserId();
-            if(shMap.containsKey(shId)){
-                shIdList.add(i, shId);
-                i ++;
-            }
-        }
-        if(i == 0){
-            return "人均消费" + toPay;
-        }
-        Double shareHolderToPay = Double.parseDouble(consumption) / i;
-        for(Long id : shIdList){
-            billiardShareHolderDAO.update(id, billiardShareHolderDAO.queryById(id).getBalance() - shareHolderToPay);
-        }
-        return "人均消费" + toPay;
-    }
 }
