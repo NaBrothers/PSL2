@@ -3,10 +3,13 @@ package com.nabrothers.psl.server.handler;
 import com.nabrothers.psl.sdk.message.*;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
+import com.nabrothers.psl.server.controller.CacheController;
 import com.nabrothers.psl.sdk.dto.GroupDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
+import com.nabrothers.psl.server.service.impl.CacheServiceImpl;
+import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 import com.nabrothers.psl.server.utils.ImageUtils;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +31,9 @@ public class GroupMessageHandler extends MessageHandler {
 
     private HandlerContext context = HandlerContext.getInstance();
 
+    @Resource
+    private CacheService cacheService;
+
     @Override
     public Message doHandle(CQHttpRequest request) {
         GroupMessageRequest messageRequest = (GroupMessageRequest) request;
@@ -37,13 +43,12 @@ public class GroupMessageHandler extends MessageHandler {
         Message message = null;
         try {
             Object result = context.handle(messageRequest.getMessage());
-            if (result == null) {
-                return null;
-            }
-            if (result instanceof Message) {
-                message = (Message) result;
-            } else {
-                message = new SimpleMessage(result.toString());
+            if (result != null) {
+                if (result instanceof Message) {
+                    message = (Message) result;
+                } else {
+                    message = new SimpleMessage(result.toString());
+                }
             }
         } catch (Exception e) {
             log.error(e);
@@ -73,8 +78,13 @@ public class GroupMessageHandler extends MessageHandler {
             }
 
             if (StringUtils.isNotEmpty(response)) {
-                Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
-                message.setId(msgId);
+                if(cacheService.get("config", "risk", "off").equals("off")) {
+                    Long msgId = messageService.sendGroupMessage(messageRequest.getGroup_id(), response);
+                    message.setId(msgId);
+                } else {
+                    Long msgId = messageService.sendPrivateMessage(messageRequest.getUser_id(), response);
+                    message.setId(msgId);
+                }
             }
             return message;
         }
