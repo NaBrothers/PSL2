@@ -67,13 +67,7 @@ public class BilliardController {
         gameTypeMap.entrySet().stream().forEach(entry -> typeGameMap.put(entry.getValue(), entry.getKey()));
     }
 
-    @Handler(info = "GBL积分榜")
-    public TextMessage billiard() {
-        TextMessage textMessage = new TextMessage();
-        textMessage.setTitle("Geeks Billiard League");
-        Map<Long, Integer> playersMap = new HashMap<>();
-
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+    private String calcScoreBoard(Map<Long, Integer> playersMap, List<BilliardRecordDTO> brList) {
         for (BilliardRecordDTO it : brList) {
             Integer winnerPoints = 0;
             String[] winnerArray = it.getWinnerId().split(",");
@@ -129,8 +123,54 @@ public class BilliardController {
             sb.append(String.format("%d - [%d] %s %d\n", i, user.getId(), user.getName(), entry.getValue()));
         }
 
-        textMessage.setData(sb.toString());
+        return sb.toString();
+    }
 
+    @Handler(info = "GBL总积分榜")
+    public TextMessage billiard() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 封神榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryAll()));
+        return textMessage;
+    }
+
+    @Handler(command = "风云榜", info = "GBL近十场积分榜")
+    public TextMessage billiardScoreBoardLast10() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 风云榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryLastN(10)));
+        return textMessage;
+    }
+
+    @Handler(command = "慕斯伟罗榜", info = "GBL友谊赛积分榜")
+    public TextMessage billiardScoreBoardFriendly() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 慕斯伟罗榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryFriendly()));
+        return textMessage;
+    }
+
+    @Handler(command = "卡哇伊榜", info = "GBL正赛积分榜")
+    public TextMessage billiardScoreBoardChampionship() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 卡哇伊榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryChampionship()));
+        return textMessage;
+    }
+
+    @Handler(command = "兹拉坦榜", info = "GBL小组赛积分榜")
+    public TextMessage billiardScoreBoardGroupStage() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 兹拉坦榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(0, 0)));
+        return textMessage;
+    }
+
+    @Handler(command = "巴特勒榜", info = "GBL淘汰赛积分榜")
+    public TextMessage billiardScoreBoardEliminateStage() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League 巴特勒榜");
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(1, 3)));
         return textMessage;
     }
 
@@ -799,4 +839,5 @@ public class BilliardController {
 
         return message;
     }
+
 }
