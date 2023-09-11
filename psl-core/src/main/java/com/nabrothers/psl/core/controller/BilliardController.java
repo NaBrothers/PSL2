@@ -110,10 +110,12 @@ public class BilliardController {
         }
 
         List<Map.Entry<Long, Integer>> entrys = new ArrayList<>(playersMap.entrySet());
-        Collections.sort(entrys, (Map.Entry<Long, Integer> a, Map.Entry<Long, Integer> b) -> {
-            return b.getValue().compareTo(a.getValue());
-        });
+        Collections.sort(entrys, (a, b) -> b.getValue().compareTo(a.getValue()));
 
+        return printScoreBoard(entrys);
+    }
+
+    private String printScoreBoard(List<Map.Entry<Long, Integer>> entrys) {
         StringBuilder sb = new StringBuilder();
         int i = 0;
         for (Map.Entry<Long, Integer> entry : entrys) {
@@ -155,6 +157,31 @@ public class BilliardController {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 卡哇伊榜");
         textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryChampionship()));
+        return textMessage;
+    }
+
+    @Handler(command = "cjb", info = "GBL友谊赛和正赛分差榜")
+    public TextMessage billiardScoreBoardCjb() {
+        TextMessage textMessage = new TextMessage();
+        textMessage.setTitle("Geeks Billiard League CJB榜");
+        Map<Long, Integer> friendly = new HashMap<>();
+        Map<Long, Integer> championship = new HashMap<>();
+        calcScoreBoard(friendly, billiardRecordDAO.queryFriendly());
+        calcScoreBoard(championship, billiardRecordDAO.queryChampionship());
+
+        Map<Long, Integer> playersMap = new HashMap<>();
+        friendly.forEach((key, value) -> playersMap.put(key, value));
+        championship.forEach((key, value) -> {
+            if (!playersMap.containsKey(key)) {
+                playersMap.put(key, Integer.valueOf(cacheService.get("billiard", "originalPoints")));
+            }
+            playersMap.put(key, playersMap.get(key) - value);
+        });
+
+        List<Map.Entry<Long, Integer>> entrys = new ArrayList<>(playersMap.entrySet());
+        Collections.sort(entrys, (a, b) -> b.getValue().compareTo(a.getValue()));
+
+        textMessage.setData(printScoreBoard(entrys));
         return textMessage;
     }
 
