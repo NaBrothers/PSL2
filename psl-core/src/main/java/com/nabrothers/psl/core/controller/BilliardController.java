@@ -166,6 +166,12 @@ public class BilliardController {
         textMessage.setTitle("Geeks Billiard League CJB榜");
         Map<Long, Integer> friendly = new HashMap<>();
         Map<Long, Integer> championship = new HashMap<>();
+
+	Map<Integer, String> cjbGameTypeMap = new HashMap<>();
+	gameTypeMap.forEach((key, value) -> cjbGameTypeMap.put(key, "友谊赛"));
+	Map<Integer, String> tmp = gameTypeMap;
+       	gameTypeMap = cjbGameTypeMap;	
+
         calcScoreBoard(friendly, billiardRecordDAO.queryFriendly());
         calcScoreBoard(championship, billiardRecordDAO.queryChampionship());
 
@@ -182,6 +188,7 @@ public class BilliardController {
         Collections.sort(entrys, (a, b) -> b.getValue().compareTo(a.getValue()));
 
         textMessage.setData(printScoreBoard(entrys));
+	gameTypeMap = tmp;
         return textMessage;
     }
 
