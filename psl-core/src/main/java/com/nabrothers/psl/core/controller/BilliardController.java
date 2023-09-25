@@ -13,6 +13,8 @@ import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jfree.chart.ChartFactory;
@@ -22,7 +24,10 @@ import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.SpiderWebPlot;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYDataset;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -167,9 +172,9 @@ public class BilliardController {
         Map<Long, Integer> friendly = new HashMap<>();
         Map<Long, Integer> championship = new HashMap<>();
 
-	Map<Integer, String> cjbGameTypeMap = new HashMap<>();
-	gameTypeMap.forEach((key, value) -> cjbGameTypeMap.put(key, "友谊赛"));
-	Map<Integer, String> tmp = gameTypeMap;
+        Map<Integer, String> cjbGameTypeMap = new HashMap<>();
+        gameTypeMap.forEach((key, value) -> cjbGameTypeMap.put(key, "友谊赛"));
+        Map<Integer, String> tmp = gameTypeMap;
        	gameTypeMap = cjbGameTypeMap;	
 
         calcScoreBoard(friendly, billiardRecordDAO.queryFriendly());
@@ -188,7 +193,7 @@ public class BilliardController {
         Collections.sort(entrys, (a, b) -> b.getValue().compareTo(a.getValue()));
 
         textMessage.setData(printScoreBoard(entrys));
-	gameTypeMap = tmp;
+	    gameTypeMap = tmp;
         return textMessage;
     }
 
@@ -505,6 +510,7 @@ public class BilliardController {
         Map<Long, Double> pointsDiffMap = getPointsDifferMap();
         Map<Long, String> playerMap = new HashMap<>();
         Map<Integer, Integer> gameCoMap = new HashMap<>();
+        Long currentGame = Long.valueOf(cacheService.get("billiard", "currentGame"));
 
         for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
@@ -512,14 +518,26 @@ public class BilliardController {
         Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
 
         List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
-        Map<Long, Map<Long, Integer>> changeList = new HashMap<>();
+        Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
         List<Long> gameSeq = new ArrayList<>();
         gameSeq.add(0L);
+        // 缩减展示横轴数量
+        List<Long> recordIdBeingDisplayed = new ArrayList<>();
+        Long tmpGameId = 0L;
+        Long tmpRecordId = 0L;
 
         for (BilliardRecordDTO br : brList) {
             if (!gameSeq.contains(br.getId())) {
                 gameSeq.add(br.getId());
             }
+            if (br.getGameId() > tmpGameId && tmpRecordId != 0) {
+                recordIdBeingDisplayed.add(tmpRecordId);
+            }
+            if (br.getGameId() == currentGame) {
+                recordIdBeingDisplayed.add(br.getId());
+            }
+            tmpGameId = br.getGameId();
+            tmpRecordId = br.getId();
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
             for (String winner : winners) {
@@ -541,35 +559,63 @@ public class BilliardController {
         }
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        // xydataset
+        DefaultXYDataset xyDataset = new DefaultXYDataset();
 
         for (Long id : changeList.keySet()) {
+            List<Double> xList = new ArrayList<>();
+            List<Double> yList = new ArrayList<>();
             Map<Long, Integer> change = changeList.get(id);
             Integer sum = 0;
             for (Long gid : gameSeq) {
                 if (change.containsKey(gid)) {
                     sum += change.get(gid);
                 }
-                dataset.addValue(sum, playerMap.get(id) + "        ", gid);
+                if (recordIdBeingDisplayed.contains(gid) && Collections.min(change.keySet()) <= gid) {
+                    dataset.addValue(sum, playerMap.get(id) + "        ", gid);
+                }
+                xList.add(Double.valueOf(gid.toString()));
+                yList.add(Double.valueOf(sum.toString()));
             }
+            // xydataset
+            xyDataset.addSeries(playerMap.get(id) + "        ", new double[][]{ArrayUtils.toPrimitive(xList.toArray(new Double[0])), ArrayUtils.toPrimitive(yList.toArray(new Double[0]))});
         }
 
-        JFreeChart chart = ChartFactory.createLineChart(
+        
+
+        // JFreeChart chart = ChartFactory.createLineChart(
+        //         "积分曲线",
+        //         "比赛",
+        //         "积分",
+        //         dataset,
+        //         PlotOrientation.VERTICAL,
+        //         true, true, false);
+
+        // chart.getPlot().setBackgroundPaint(Color.WHITE);
+        // for (int i = 0; i < changeList.keySet().size(); i++) {
+        //     ((CategoryPlot) chart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
+        // }
+
+        // ((CategoryPlot) chart.getPlot()).getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.DOWN_45);
+
+        // ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * recordIdBeingDisplayed.size(),
+        //         1024);
+
+        // xydataset
+        JFreeChart xyChart = ChartFactory.createXYLineChart(
                 "积分曲线",
                 "比赛",
                 "积分",
-                dataset,
+                xyDataset,
                 PlotOrientation.VERTICAL,
                 true, true, false);
-
-        chart.getPlot().setBackgroundPaint(Color.WHITE);
+        xyChart.getPlot().setBackgroundPaint(Color.WHITE);
         for (int i = 0; i < changeList.keySet().size(); i++) {
-            ((CategoryPlot) chart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(3.0f));
+            ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
-
-        ((CategoryPlot) chart.getPlot()).getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.DOWN_45);
-
-        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), chart, 38 * gameSeq.size(),
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), xyChart, 38 * recordIdBeingDisplayed.size(),
                 1024);
+
         message.setUrl("cache/chart.jpg");
 
         return message;
