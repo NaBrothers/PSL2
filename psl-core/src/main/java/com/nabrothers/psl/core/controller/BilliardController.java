@@ -504,6 +504,189 @@ public class BilliardController {
         return pointsDiffMap;
     }
 
+    @Handler(command = "积分 同期")
+    public ImageMessage showHomochronousPlot() throws IOException {
+        ImageMessage message = new ImageMessage();
+        Map<Long, Double> pointsDiffMap = getPointsDifferMap();
+        Map<Long, String> playerMap = new HashMap<>();
+        Map<Integer, Integer> gameCoMap = new HashMap<>();
+        Long currentGame = Long.valueOf(cacheService.get("billiard", "currentGame"));
+
+        for (Integer gt : gameTypeMap.keySet()) {
+            gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
+        }
+        Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
+        List<Long> gameSeq = new ArrayList<>();
+        gameSeq.add(0L);
+        // 缩减展示横轴数量
+        int recordNumBeingDisplayed = 0;
+        Long tmpGameId = 0L;
+        Long tmpRecordId = 0L;
+
+        for (BilliardRecordDTO br : brList) {
+            if (!gameSeq.contains(br.getId())) {
+                gameSeq.add(br.getId());
+            }
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            for (String winner : winners) {
+                long wid = Long.valueOf(winner);
+                playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
+                changeList.putIfAbsent(wid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(wid);
+                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
+                change.put(Long.valueOf(change.size()), point);
+                if (change.size() > recordNumBeingDisplayed) recordNumBeingDisplayed = change.size();
+            }
+            for (String loser : losers) {
+                long lid = Long.valueOf(loser);
+                playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
+                changeList.putIfAbsent(lid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(lid);
+                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
+                change.put(Long.valueOf(change.size()), point);
+                if (change.size() > recordNumBeingDisplayed) recordNumBeingDisplayed = change.size();
+            }
+        }
+        // xydataset
+        DefaultXYDataset xyDataset = new DefaultXYDataset();
+
+        for (Long id : changeList.keySet()) {
+            List<Double> xList = new ArrayList<>();
+            List<Double> yList = new ArrayList<>();
+            Map<Long, Integer> change = changeList.get(id);
+            Integer sum = 0;
+            for (Long i = 0L; i < change.size(); i++) {
+                sum += change.get(i);
+                xList.add(Double.valueOf(i));
+                yList.add(Double.valueOf(sum.toString()));
+            }
+            // xydataset
+            xyDataset.addSeries(playerMap.get(id) + "        ", new double[][]{ArrayUtils.toPrimitive(xList.toArray(new Double[0])), ArrayUtils.toPrimitive(yList.toArray(new Double[0]))});
+        }
+
+        JFreeChart xyChart = ChartFactory.createXYLineChart(
+                "积分曲线",
+                "比赛",
+                "积分",
+                xyDataset,
+                PlotOrientation.VERTICAL,
+                true, true, false);
+        xyChart.getPlot().setBackgroundPaint(Color.WHITE);
+        for (int i = 0; i < changeList.keySet().size(); i++) {
+            ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
+        }
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), xyChart, 6 * recordNumBeingDisplayed,
+                1024);
+
+        message.setUrl("cache/chart.jpg");
+
+        return message;
+    }
+
+    @Handler(command = "积分 同期系列赛")
+    public ImageMessage showHomochronousSerialPlot() throws IOException {
+        ImageMessage message = new ImageMessage();
+        Map<Long, Double> pointsDiffMap = getPointsDifferMap();
+        Map<Long, String> playerMap = new HashMap<>();
+        Map<Integer, Integer> gameCoMap = new HashMap<>();
+        Long currentGame = Long.valueOf(cacheService.get("billiard", "currentGame"));
+
+        for (Integer gt : gameTypeMap.keySet()) {
+            gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
+        }
+        Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
+
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
+        List<Long> gameSeq = new ArrayList<>();
+        gameSeq.add(0L);
+        // 缩减展示横轴数量
+        List<Long> recordIdBeingDisplayed = new ArrayList<>();
+        Long tmpGameId = 0L;
+        Long tmpRecordId = 0L;
+
+        for (BilliardRecordDTO br : brList) {
+            if (!gameSeq.contains(br.getId())) {
+                gameSeq.add(br.getId());
+            }
+            if (br.getGameId() > tmpGameId && tmpRecordId != 0) {
+                recordIdBeingDisplayed.add(tmpRecordId);
+            }
+            if (br.getGameId() == currentGame && br.equals(brList.get(brList.size()-1))) {
+                recordIdBeingDisplayed.add(br.getId());
+            }
+            tmpGameId = br.getGameId();
+            tmpRecordId = br.getId();
+            List<String> winners = Arrays.asList(br.getWinnerId().split(","));
+            List<String> losers = Arrays.asList(br.getLoserId().split(","));
+            for (String winner : winners) {
+                long wid = Long.valueOf(winner);
+                playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
+                changeList.putIfAbsent(wid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(wid);
+                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
+                change.put(br.getId(), point);
+            }
+            for (String loser : losers) {
+                long lid = Long.valueOf(loser);
+                playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
+                changeList.putIfAbsent(lid, new HashMap<>());
+                Map<Long, Integer> change = changeList.get(lid);
+                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
+                change.put(br.getId(), point);
+            }
+        }
+
+        // xydataset
+        DefaultXYDataset xyDataset = new DefaultXYDataset();
+
+        for (Long id : changeList.keySet()) {
+            List<Double> xList = new ArrayList<>();
+            List<Double> yList = new ArrayList<>();
+            xList.add(0d);
+            yList.add(0d);
+            Map<Long, Integer> change = changeList.get(id);
+            Integer sum = 0;
+            for (Long gid : gameSeq) {
+                boolean participated = false;
+                if (change.containsKey(gid)) {
+                    sum += change.get(gid);
+                    participated = true;
+                }
+                if (recordIdBeingDisplayed.contains(gid) && participated) {
+                    xList.add(Double.valueOf(xList.size()));
+                    yList.add(Double.valueOf(sum.toString()));
+                }
+            }
+            // xydataset
+            xyDataset.addSeries(playerMap.get(id) + "        ", new double[][]{ArrayUtils.toPrimitive(xList.toArray(new Double[0])), ArrayUtils.toPrimitive(yList.toArray(new Double[0]))});
+        }
+
+
+        // xydataset
+        JFreeChart xyChart = ChartFactory.createXYLineChart(
+                "积分曲线",
+                "比赛",
+                "积分",
+                xyDataset,
+                PlotOrientation.VERTICAL,
+                true, true, false);
+        xyChart.getPlot().setBackgroundPaint(Color.WHITE);
+        for (int i = 0; i < changeList.keySet().size(); i++) {
+            ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
+        }
+        ChartUtils.saveChartAsJPEG(new File("./go-cqhttp/data/images/cache/chart.jpg"), xyChart, 38 * recordIdBeingDisplayed.size(),
+                1024);
+
+        message.setUrl("cache/chart.jpg");
+
+        return message;
+    }
+
     @Handler(command = "积分")
     public ImageMessage showPlot() throws IOException {
         ImageMessage message = new ImageMessage();
