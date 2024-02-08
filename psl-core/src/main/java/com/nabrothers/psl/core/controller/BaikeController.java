@@ -5,9 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
-import com.nabrothers.psl.sdk.message.AudioMessage;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 
 @Component
 @Handler(command = "啥是")

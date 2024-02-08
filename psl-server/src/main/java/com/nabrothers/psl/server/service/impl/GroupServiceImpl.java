@@ -5,13 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.sdk.dto.GroupDTO;
 import com.nabrothers.psl.server.service.GroupService;
 import com.nabrothers.psl.server.utils.HttpUtils;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Log4j2
 @Service
 public class GroupServiceImpl implements GroupService {
     @Override

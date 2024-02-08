@@ -1,9 +1,9 @@
 package com.nabrothers.psl.server.utils;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class CommonUtils {
+    @SuppressWarnings("rawtypes")
     public static List subList(List list, int from, int to) {
         if (list.isEmpty()) {
             return list;

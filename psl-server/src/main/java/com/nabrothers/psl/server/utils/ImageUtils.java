@@ -23,6 +23,7 @@ import javax.imageio.ImageIO;
 /**
  * 如果一行文字长度超过了既定的宽度，那么主动执行换行操作
  */
+@SuppressWarnings("restriction")
 @Log4j2
 @Component
 public class ImageUtils {

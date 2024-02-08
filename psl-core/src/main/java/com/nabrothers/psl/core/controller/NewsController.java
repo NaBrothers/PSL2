@@ -2,7 +2,6 @@ package com.nabrothers.psl.core.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.nabrothers.psl.core.dto.UserDTO;
 import com.nabrothers.psl.core.utils.Config;
 import com.nabrothers.psl.core.utils.HttpUtils;
 import com.nabrothers.psl.sdk.annotation.Handler;
@@ -10,7 +9,6 @@ import com.nabrothers.psl.sdk.annotation.Hidden;
 import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.service.MessageService;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

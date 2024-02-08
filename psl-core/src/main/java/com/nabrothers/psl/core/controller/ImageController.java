@@ -6,8 +6,6 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
 import com.nabrothers.psl.sdk.message.ImageMessage;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-
 import java.util.Random;
 
 @Component

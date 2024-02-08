@@ -23,6 +23,7 @@ public class PrivateMessageHandler extends MessageHandler{
 
     private HandlerContext context = HandlerContext.getInstance();
 
+    @SuppressWarnings("finally")
     @Override
     public Message doHandle(CQHttpRequest request) {
         PrivateMessageRequest messageRequest = (PrivateMessageRequest) request;

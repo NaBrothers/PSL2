@@ -14,13 +14,14 @@ public class BrotliUtils {
     public static String toString(InputStream is) {
         try {
             BrotliInputStream stream = new BrotliInputStream(is);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            StringBuilder result = new StringBuilder();
-            String str = null;
-            while ((str = reader.readLine()) != null) {
-                result.append(str);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+                StringBuilder result = new StringBuilder();
+                String str = null;
+                while ((str = reader.readLine()) != null) {
+                    result.append(str);
+                }
+                return result.toString();
             }
-            return result.toString();
         } catch (IOException e) {
             e.printStackTrace();
             return null;

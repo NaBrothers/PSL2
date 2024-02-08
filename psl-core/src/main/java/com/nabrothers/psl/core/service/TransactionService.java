@@ -20,7 +20,7 @@ public class TransactionService {
     public void add(Long userId, Long amount) {
         validateUser(userId);
         validateAmount(amount);
-        int ret = transactionDAO.addMoneyByUserId(userId, amount);
+        transactionDAO.addMoneyByUserId(userId, amount);
     }
 
     public void deduct(Long userId, Long amount) {

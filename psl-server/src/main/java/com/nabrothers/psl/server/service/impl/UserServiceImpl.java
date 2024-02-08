@@ -4,11 +4,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.nabrothers.psl.sdk.dto.UserDTO;
 import com.nabrothers.psl.server.service.UserService;
 import com.nabrothers.psl.server.utils.HttpUtils;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 @Service
-@Log4j2
 public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getCurrentUser() {

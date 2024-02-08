@@ -13,8 +13,6 @@ import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.sdk.service.MessageService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-
 import javax.annotation.Resource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
 public class Zhibo8Controller {
     private static volatile boolean start = false;
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final Map<String, String> typeMap = new HashMap(){{
         put("football", "足球");
         put("basketball", "篮球");

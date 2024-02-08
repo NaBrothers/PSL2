@@ -4,7 +4,6 @@ import com.nabrothers.psl.sdk.dto.GroupDTO;
 import com.nabrothers.psl.sdk.dto.UserDTO;
 import com.nabrothers.psl.server.service.GroupService;
 import com.nabrothers.psl.server.service.UserService;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
-@Log4j2
 public class AccountManager {
     @Resource
     private UserService userService;

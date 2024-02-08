@@ -2,7 +2,6 @@ package com.nabrothers.psl.server.controller;
 
 import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.annotation.Param;
-import com.nabrothers.psl.sdk.enums.TriggerType;
 import com.nabrothers.psl.sdk.message.TextMessage;
 import com.nabrothers.psl.server.context.HandlerContext;
 import org.apache.commons.lang3.StringUtils;

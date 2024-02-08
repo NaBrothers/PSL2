@@ -232,6 +232,7 @@ public class HttpUtils {
         return null;
     }
 
+    @SuppressWarnings("deprecation")
     @Nullable
     public static String doPost(String url, JSONObject body, JSONObject header) {
         String jsonStr = body.toJSONString();

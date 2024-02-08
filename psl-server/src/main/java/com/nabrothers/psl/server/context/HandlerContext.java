@@ -135,12 +135,13 @@ public class HandlerContext {
         return instance;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void load(Plugin plugin) {
         String name = plugin.getPackageName();
         if (packages.contains(name)) {
             return;
         }
-        this.plugin.set(plugin);
+        HandlerContext.plugin.set(plugin);
         try {
             Reflections reflections = new Reflections(new ConfigurationBuilder().
                     setUrls(ClasspathHelper.forPackage(name)).
@@ -218,9 +219,10 @@ public class HandlerContext {
         } catch (Exception e) {
             log.error("插件包加载失败：" + name, e);
         }
-        this.plugin.remove();
+        HandlerContext.plugin.remove();
     }
 
+    @SuppressWarnings("unchecked")
     private void _parse(Node node, List<String> commands, Method method) {
         if (commands.isEmpty()) {
             if (node.handlers.get(method.getParameterCount()) != null) {
@@ -279,6 +281,7 @@ public class HandlerContext {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     private Object _handle(Node node, List<String> commands) {
         if (commands.isEmpty()) {
             return invoke(node, commands);

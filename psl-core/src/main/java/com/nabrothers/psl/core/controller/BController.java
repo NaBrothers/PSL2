@@ -5,8 +5,6 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.message.CQCode;
 import com.nabrothers.psl.sdk.message.SimpleMessage;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

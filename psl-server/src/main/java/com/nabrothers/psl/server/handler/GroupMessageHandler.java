@@ -3,12 +3,10 @@ package com.nabrothers.psl.server.handler;
 import com.nabrothers.psl.sdk.message.*;
 import com.nabrothers.psl.server.config.GlobalConfig;
 import com.nabrothers.psl.server.context.HandlerContext;
-import com.nabrothers.psl.server.controller.CacheController;
 import com.nabrothers.psl.sdk.dto.GroupDTO;
 import com.nabrothers.psl.server.manager.AccountManager;
 import com.nabrothers.psl.server.request.CQHttpRequest;
 import com.nabrothers.psl.server.request.GroupMessageRequest;
-import com.nabrothers.psl.server.service.impl.CacheServiceImpl;
 import com.nabrothers.psl.sdk.service.CacheService;
 import com.nabrothers.psl.sdk.service.MessageService;
 import com.nabrothers.psl.server.utils.ImageUtils;
@@ -34,6 +32,7 @@ public class GroupMessageHandler extends MessageHandler {
     @Resource
     private CacheService cacheService;
 
+    @SuppressWarnings("finally")
     @Override
     public Message doHandle(CQHttpRequest request) {
         GroupMessageRequest messageRequest = (GroupMessageRequest) request;

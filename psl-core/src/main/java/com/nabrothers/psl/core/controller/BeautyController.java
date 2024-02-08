@@ -6,11 +6,6 @@ import com.nabrothers.psl.sdk.annotation.Handler;
 import com.nabrothers.psl.sdk.message.ImageMessage;
 import com.nabrothers.psl.sdk.message.VideoMessage;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 
 @Component
 public class BeautyController {

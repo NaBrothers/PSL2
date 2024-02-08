@@ -20,14 +20,11 @@ import org.apache.commons.lang3.function.TriFunction;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryLabelPositions;
-import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.SpiderWebPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.XYDataset;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -510,8 +507,6 @@ public class BilliardController {
         Map<Long, Double> pointsDiffMap = getPointsDifferMap();
         Map<Long, String> playerMap = new HashMap<>();
         Map<Integer, Integer> gameCoMap = new HashMap<>();
-        Long currentGame = Long.valueOf(cacheService.get("billiard", "currentGame"));
-
         for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
@@ -523,8 +518,6 @@ public class BilliardController {
         gameSeq.add(0L);
         // 缩减展示横轴数量
         int recordNumBeingDisplayed = 0;
-        Long tmpGameId = 0L;
-        Long tmpRecordId = 0L;
 
         for (BilliardRecordDTO br : brList) {
             if (!gameSeq.contains(br.getId())) {
