@@ -1,5 +1,6 @@
 package com.nabrothers.psl.server.bootstrap;
 
+import com.nabrothers.psl.server.config.GlobalConfig;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -9,8 +10,6 @@ import java.io.File;
 import java.nio.file.Path;
 
 public class JettyServer {
-    private static final int HTTP_PORT = 5701;
-
     public static final String CONTEXT = "/";
 
     private static final String DEFAULT_WEBAPP_PATH = "psl-server/src/main/webapp";
@@ -36,7 +35,7 @@ public class JettyServer {
 
         // Create a ServerConnector to accept connections from clients.
         SelectChannelConnector connector = new SelectChannelConnector();
-        connector.setPort(HTTP_PORT);
+        connector.setPort(GlobalConfig.HTTP_PORT);
         connector.setAcceptors(4);// 同时监听read事件的线程数
         connector.setMaxBuffers(2048);
         connector.setMaxIdleTime(10000);

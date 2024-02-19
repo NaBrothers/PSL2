@@ -17,6 +17,15 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="psl-sdk" />
+    <orderEntry type="module" module-name="bot-qqpd-java" />
+    <orderEntry type="library" name="Maven: io.github.Kloping:SpringTool:0.6.3-Alpha1" level="project" />
+    <orderEntry type="library" name="Maven: org.fusesource.jansi:jansi:2.4.0" level="project" />
+    <orderEntry type="library" name="Maven: io.github.Kloping:JvUtils:0.4.9-Beta1" level="project" />
+    <orderEntry type="library" name="Maven: org.quartz-scheduler:quartz:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.zaxxer:HikariCP-java7:2.4.13" level="project" />
+    <orderEntry type="library" name="Maven: org.java-websocket:Java-WebSocket:1.5.3" level="project" />
+    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.10.1" level="project" />
+    <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.15.4" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-server:8.2.0.v20160908" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-continuation:8.2.0.v20160908" level="project" />

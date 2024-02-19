@@ -7,3 +7,6 @@
 [submodule "psl-proxy"]
 	path = psl-proxy
 	url = https://github.com/NaBrothers/psl-proxy.git
+[submodule "qqpd-bot-java"]
+	path = qqpd-bot-java
+	url = https://github.com/NaBrothers/qqpd-bot-java.git

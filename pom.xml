@@ -10,6 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
 <!--        psl-server必须最后加载-->
+        <module>qqpd-bot-java</module>
         <module>psl-sdk</module>
         <module>psl-core</module>
         <module>psl-server</module>
