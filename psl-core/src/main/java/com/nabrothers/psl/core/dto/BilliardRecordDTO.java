@@ -15,4 +15,5 @@ public class BilliardRecordDTO {
     private Integer gameType;
     private Date updateTime;
     private Date createTime;
+    private Long season;
 }

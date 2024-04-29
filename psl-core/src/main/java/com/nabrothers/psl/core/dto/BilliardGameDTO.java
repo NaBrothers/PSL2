@@ -10,4 +10,5 @@ public class BilliardGameDTO {
     private String players;
     private String date;
     private String remark;
+    private Long season;
 }

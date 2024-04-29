@@ -12,8 +12,10 @@ import java.util.List;
 
 @Component
 public interface BilliardRecordDAO {
-    @Insert("insert into `BilliardRecord` (gameid,gametype,winnerid,loserid,scorew,scorel)" +
-            "values (#{gameId},#{gameType},#{winnerId},#{loserId},#{scoreW},#{scoreL})")
+    public static final Long season = 1L;
+
+    @Insert("insert into `BilliardRecord` (gameid,gametype,winnerid,loserid,scorew,scorel,season)" +
+            "values (#{gameId},#{gameType},#{winnerId},#{loserId},#{scoreW},#{scoreL},#{season})")
     void insert(BilliardRecordDTO billiardRecordDTO);
 
     @Select("select * from `BilliardRecord` where gameid = #{gameId}")
@@ -22,20 +24,20 @@ public interface BilliardRecordDAO {
     @Select("select * from `BilliardRecord` where id = #{id}")
     BilliardRecordDTO queryById(Long id);
 
-    @Select("select * from `BilliardRecord`")
-    List<BilliardRecordDTO> queryAll();
+    @Select("select * from `BilliardRecord` where season=#{season}")
+    List<BilliardRecordDTO> queryAll(Long season);
 
-    @Select("select * from `BilliardRecord` where gameid + #{n} > (select max(gameid) from `BilliardRecord`)")
-    List<BilliardRecordDTO> queryLastN(Integer n);
+    @Select("select * from `BilliardRecord` where gameid + #{n} > (select max(gameid) from `BilliardRecord`) and season=#{season}")
+    List<BilliardRecordDTO> queryLastN(Integer n, Long season);
 
-    @Select("select * from `BilliardRecord` where gametype=4")
-    List<BilliardRecordDTO> queryFriendly();
+    @Select("select * from `BilliardRecord` where gametype=4 and season=#{season}")
+    List<BilliardRecordDTO> queryFriendly(Long season);
 
-    @Select("select * from `BilliardRecord` where gametype<4")
-    List<BilliardRecordDTO> queryChampionship();
+    @Select("select * from `BilliardRecord` where gametype<4 and season=#{season}")
+    List<BilliardRecordDTO> queryChampionship(Long season);
 
-    @Select("select * from `BilliardRecord` where gametype >= #{min} and gametype <= #{max}")
-    List<BilliardRecordDTO> queryGameTypeScope(@Param("min") Integer min, @Param("max") Integer max);
+    @Select("select * from `BilliardRecord` where gametype >= #{min} and gametype <= #{max} and season=#{season}")
+    List<BilliardRecordDTO> queryGameTypeScope(@Param("min") Integer min, @Param("max") Integer max, Long season);
 
     @Delete("delete * from 'BilliardRecord' where id = #{id}")
     void deleteById(Long id);

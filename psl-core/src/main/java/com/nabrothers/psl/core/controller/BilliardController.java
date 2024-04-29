@@ -20,6 +20,7 @@ import org.apache.commons.lang3.function.TriFunction;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.SpiderWebPlot;
 import org.jfree.chart.plot.XYPlot;
@@ -132,33 +133,37 @@ public class BilliardController {
 
     @Handler(info = "GBL总积分榜")
     public TextMessage billiard() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 封神榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryAll()));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryAll(season)));
         return textMessage;
     }
 
     @Handler(command = "风云榜", info = "GBL近十场积分榜")
     public TextMessage billiardScoreBoardLast10() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 风云榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryLastN(10)));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryLastN(10, season)));
         return textMessage;
     }
 
     @Handler(command = "慕斯伟罗榜", info = "GBL友谊赛积分榜")
     public TextMessage billiardScoreBoardFriendly() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 慕斯伟罗榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryFriendly()));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryFriendly(season)));
         return textMessage;
     }
 
     @Handler(command = "卡哇伊榜", info = "GBL正赛积分榜")
     public TextMessage billiardScoreBoardChampionship() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 卡哇伊榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryChampionship()));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryChampionship(season)));
         return textMessage;
     }
 
@@ -173,9 +178,9 @@ public class BilliardController {
         gameTypeMap.forEach((key, value) -> cjbGameTypeMap.put(key, "友谊赛"));
         Map<Integer, String> tmp = gameTypeMap;
        	gameTypeMap = cjbGameTypeMap;	
-
-        calcScoreBoard(friendly, billiardRecordDAO.queryFriendly());
-        calcScoreBoard(championship, billiardRecordDAO.queryChampionship());
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        calcScoreBoard(friendly, billiardRecordDAO.queryFriendly(season));
+        calcScoreBoard(championship, billiardRecordDAO.queryChampionship(season));
 
         Map<Long, Integer> playersMap = new HashMap<>();
         friendly.forEach((key, value) -> playersMap.put(key, value));
@@ -196,17 +201,19 @@ public class BilliardController {
 
     @Handler(command = "兹拉坦榜", info = "GBL小组赛积分榜")
     public TextMessage billiardScoreBoardGroupStage() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 兹拉坦榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(0, 0)));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(0, 0, season)));
         return textMessage;
     }
 
     @Handler(command = "巴特勒榜", info = "GBL淘汰赛积分榜")
     public TextMessage billiardScoreBoardEliminateStage() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("Geeks Billiard League 巴特勒榜");
-        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(1, 3)));
+        textMessage.setData(calcScoreBoard(new HashMap<>(), billiardRecordDAO.queryGameTypeScope(1, 3, season)));
         return textMessage;
     }
 
@@ -241,7 +248,7 @@ public class BilliardController {
             }
             losers.add(loserDTO.getUserId());
         }
-
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         BilliardRecordDTO billiardRecordDTO = new BilliardRecordDTO();
         billiardRecordDTO.setGameType(typeGameMap.get(type));
         billiardRecordDTO.setWinnerId(Joiner.on(',').join(winners));
@@ -249,6 +256,7 @@ public class BilliardController {
         billiardRecordDTO.setScoreW(Integer.valueOf(scoreW));
         billiardRecordDTO.setScoreL(Integer.valueOf(scoreL));
         billiardRecordDTO.setGameId(Long.valueOf(cacheService.get("billiard", "currentGame")));
+        billiardRecordDTO.setSeason(season);
         billiardRecordDAO.insert(billiardRecordDTO);
 
         return "记录成功";
@@ -265,8 +273,10 @@ public class BilliardController {
         }
         textMessage.setTitle(userDTO.getName() + " 比赛记录");
         Long userid = userDTO.getUserId();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
-        Map<Long, BilliardGameDTO> bgMap = billiardGameDAO.queryAll().stream()
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
+        Map<Long, BilliardGameDTO> bgMap = billiardGameDAO.queryAll(
+                season).stream()
                 .collect(Collectors.toMap(BilliardGameDTO::getId, Function.identity()));
         Map<Long, String> playerMap = new HashMap<>();
 
@@ -347,8 +357,8 @@ public class BilliardController {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("比赛记录");
         StringBuilder sb = new StringBuilder();
-
-        List<BilliardGameDTO> games = billiardGameDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardGameDTO> games = billiardGameDAO.queryAll(season);
 
         for (BilliardGameDTO game : games) {
             sb.append(String.format("-- [%d] %s %s --\n", game.getId(), game.getName(), game.getDate()));
@@ -427,14 +437,16 @@ public class BilliardController {
             users.add(user.getUserId());
         }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         BilliardGameDTO game = new BilliardGameDTO();
         game.setName(name);
         game.setLocation(location);
         game.setPlayers(Joiner.on(",").join(users));
         game.setDate(sdf.format(new Date()));
+        game.setSeason(season);
         Long id = billiardGameDAO.insert(game);
         if (id > 0) {
-            List<BilliardGameDTO> games = billiardGameDAO.queryAll();
+            List<BilliardGameDTO> games = billiardGameDAO.queryAll(season);
             Collections.sort(games, Comparator.comparing(BilliardGameDTO::getId));
             cacheService.put("billiard", "currentGame", games.get(games.size() - 1).getId().toString());
         }
@@ -442,10 +454,11 @@ public class BilliardController {
     }
 
     private Map<Long, Double> getPointsDifferMap() {
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         Map<Long, Double> pointsDiffMap = new HashMap<>();
         Map<Long, Integer> playersMap = new HashMap<>();
         Map<Integer, Integer> gameCoMap = new HashMap<>();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
 
         for (Integer gt : gameTypeMap.keySet()) {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
@@ -511,8 +524,8 @@ public class BilliardController {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
         Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
-
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
         List<Long> gameSeq = new ArrayList<>();
         gameSeq.add(0L);
@@ -569,6 +582,8 @@ public class BilliardController {
                 PlotOrientation.VERTICAL,
                 true, true, false);
         xyChart.getPlot().setBackgroundPaint(Color.WHITE);
+        NumberAxis numberAxis = (NumberAxis)((XYPlot)xyChart.getPlot()).getDomainAxis();
+        numberAxis.setRange(brList.get(0).getId(), brList.get(brList.size()-1).getId());
         for (int i = 0; i < changeList.keySet().size(); i++) {
             ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
@@ -592,8 +607,8 @@ public class BilliardController {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
         Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
-
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
         List<Long> gameSeq = new ArrayList<>();
         gameSeq.add(0L);
@@ -669,6 +684,8 @@ public class BilliardController {
                 PlotOrientation.VERTICAL,
                 true, true, false);
         xyChart.getPlot().setBackgroundPaint(Color.WHITE);
+        NumberAxis numberAxis = (NumberAxis)((XYPlot)xyChart.getPlot()).getDomainAxis();
+        numberAxis.setRange(brList.get(0).getId(), brList.get(brList.size()-1).getId());
         for (int i = 0; i < changeList.keySet().size(); i++) {
             ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
@@ -692,8 +709,8 @@ public class BilliardController {
             gameCoMap.put(gt, Integer.valueOf(cacheService.get("billiard", gameTypeMap.get(gt))));
         }
         Integer loseCo = Integer.valueOf(cacheService.get("billiard", "loserCo"));
-
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         Map<Long, Map<Long, Integer>> changeList = new LinkedHashMap<>();
         List<Long> gameSeq = new ArrayList<>();
         gameSeq.add(0L);
@@ -786,6 +803,8 @@ public class BilliardController {
                 PlotOrientation.VERTICAL,
                 true, true, false);
         xyChart.getPlot().setBackgroundPaint(Color.WHITE);
+        NumberAxis numberAxis = (NumberAxis)((XYPlot)xyChart.getPlot()).getDomainAxis();
+        numberAxis.setRange(brList.get(0).getId(), brList.get(brList.size()-1).getId());
         for (int i = 0; i < changeList.keySet().size(); i++) {
             ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
@@ -810,9 +829,9 @@ public class BilliardController {
         TextMessage textMessage = new TextMessage();
         textMessage.setTitle("胜率");
         StringBuilder sb = new StringBuilder();
-
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
         Map<Long, Map<Integer, Integer[]>> playerMap = new HashMap<>();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         for (BilliardRecordDTO br : brList) {
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
@@ -867,7 +886,8 @@ public class BilliardController {
 
         Map<Long, Integer[]> personalMatchResMap = new HashMap<>();
         Map<Long, Integer[]> personalDoublesMatchResMap = new HashMap<>();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         for (BilliardRecordDTO br : brList) {
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
@@ -927,7 +947,8 @@ public class BilliardController {
         StringBuilder sb = new StringBuilder();
 
         Map<Long, Integer[]> playerHonorMap = new HashMap<>();
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
 
         for (BilliardRecordDTO br : brList) {
             if (!gameTypeMap.get(br.getGameType()).equals("决赛")) continue;
@@ -980,8 +1001,8 @@ public class BilliardController {
         double allScoreSum = 0;
         double allDiffSum = 0;
         double allUnexpectedResGameCount = 0;
-
-        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll();
+        Long season = Long.valueOf(cacheService.get("billiard", "season", "1"));
+        List<BilliardRecordDTO> brList = billiardRecordDAO.queryAll(season);
         for (BilliardRecordDTO br : brList) {
             List<String> winners = Arrays.asList(br.getWinnerId().split(","));
             List<String> losers = Arrays.asList(br.getLoserId().split(","));
