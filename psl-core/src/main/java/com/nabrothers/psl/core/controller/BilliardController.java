@@ -543,7 +543,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
                 changeList.putIfAbsent(wid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(wid);
-                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
+                Integer point = (int) Math.round((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
                 change.put(Long.valueOf(change.size()), point);
                 if (change.size() > recordNumBeingDisplayed) recordNumBeingDisplayed = change.size();
             }
@@ -552,7 +552,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
                 changeList.putIfAbsent(lid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(lid);
-                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
+                Integer point = (int) Math.round((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
                 change.put(Long.valueOf(change.size()), point);
                 if (change.size() > recordNumBeingDisplayed) recordNumBeingDisplayed = change.size();
             }
@@ -570,6 +570,9 @@ public class BilliardController {
                 xList.add(Double.valueOf(i));
                 yList.add(Double.valueOf(sum.toString()));
             }
+            // System.out.println(playerMap.get(id));
+            // System.out.println(xList);
+            // System.out.println(yList);
             // xydataset
             xyDataset.addSeries(playerMap.get(id) + "        ", new double[][]{ArrayUtils.toPrimitive(xList.toArray(new Double[0])), ArrayUtils.toPrimitive(yList.toArray(new Double[0]))});
         }
@@ -583,7 +586,7 @@ public class BilliardController {
                 true, true, false);
         xyChart.getPlot().setBackgroundPaint(Color.WHITE);
         NumberAxis numberAxis = (NumberAxis)((XYPlot)xyChart.getPlot()).getDomainAxis();
-        numberAxis.setRange(brList.get(0).getId(), brList.get(brList.size()-1).getId());
+        numberAxis.setRange(0, brList.get(brList.size()-1).getId()-brList.get(0).getId());
         for (int i = 0; i < changeList.keySet().size(); i++) {
             ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
@@ -636,7 +639,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(wid, userDAO.queryByUserId(wid).getName());
                 changeList.putIfAbsent(wid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(wid);
-                Integer point = (int) ((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
+                Integer point = (int) Math.round((1 - pointsDiffMap.get(br.getId())) * gameCoMap.get(br.getGameType()) / winners.size());
                 change.put(br.getId(), point);
             }
             for (String loser : losers) {
@@ -644,7 +647,7 @@ public class BilliardController {
                 playerMap.putIfAbsent(lid, userDAO.queryByUserId(lid).getName());
                 changeList.putIfAbsent(lid, new HashMap<>());
                 Map<Long, Integer> change = changeList.get(lid);
-                Integer point = (int) ((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
+                Integer point = (int) Math.round((pointsDiffMap.get(br.getId()) - 1) * loseCo / losers.size());
                 change.put(br.getId(), point);
             }
         }
@@ -670,6 +673,9 @@ public class BilliardController {
                     yList.add(Double.valueOf(sum.toString()));
                 }
             }
+            // System.out.println(playerMap.get(id));
+            // System.out.println(xList);
+            // System.out.println(yList);
             // xydataset
             xyDataset.addSeries(playerMap.get(id) + "        ", new double[][]{ArrayUtils.toPrimitive(xList.toArray(new Double[0])), ArrayUtils.toPrimitive(yList.toArray(new Double[0]))});
         }
@@ -685,7 +691,7 @@ public class BilliardController {
                 true, true, false);
         xyChart.getPlot().setBackgroundPaint(Color.WHITE);
         NumberAxis numberAxis = (NumberAxis)((XYPlot)xyChart.getPlot()).getDomainAxis();
-        numberAxis.setRange(brList.get(0).getId(), brList.get(brList.size()-1).getId());
+        numberAxis.setRange(0, brList.get(brList.size()-1).getGameId()-brList.get(0).getGameId());
         for (int i = 0; i < changeList.keySet().size(); i++) {
             ((XYPlot) xyChart.getPlot()).getRenderer().setSeriesStroke(i, new BasicStroke(5.0f));
         }
