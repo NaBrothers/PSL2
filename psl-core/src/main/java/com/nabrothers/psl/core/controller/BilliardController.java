@@ -429,7 +429,7 @@ public class BilliardController {
     @Handler(command = "比赛 添加")
     public String addSeriesGame(@Param("比赛名") String name, @Param("地点") String location, @Param("选手") String players) {
         List<Long> users = new ArrayList<>();
-        for (String alias : players.split(",")) {
+        for (String alias : players.split(",|，")) {
             UserDTO user = userDAO.queryByAlias(alias);
             if (user == null) {
                 continue;
