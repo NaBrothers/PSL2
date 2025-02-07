@@ -232,7 +232,6 @@ public class HttpUtils {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     public static String doPost(String url, JSONObject body, JSONObject header) {
         String jsonStr = body.toJSONString();
@@ -259,10 +258,10 @@ public class HttpUtils {
         try {
             httpPost.setEntity(new StringEntity(jsonStr, ContentType.APPLICATION_JSON));
             httpResponse = httpClient.execute(httpPost);
-            if(httpResponse.getStatusLine().getStatusCode() != 200){
-                return null;
-            }
             HttpEntity entity = httpResponse.getEntity();
+	    if (entity == null) {
+	    	return null;
+	    }
             String result = EntityUtils.toString(entity);
             return result;
         } catch (ClientProtocolException e) {
