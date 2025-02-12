@@ -28,7 +28,8 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
         reply.setSupportImageMode(false);
         try {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("model", "deepseek-chat");
+	    String model = cacheService.get("deepseek", "model");
+            jsonObj.put("model", model);
 
             Long maxTokens = Long.valueOf(cacheService.get("deepseek", "max_tokens", "4096"));
 
@@ -68,7 +69,8 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
 	    //log.info(jsonObj.toString());
 	    //log.info(header.toString());
 
-            String retStr = HttpUtils.doPost("https://api.deepseek.com/chat/completions", jsonObj, header);
+	    String url = cacheService.get("deepseek", "url");
+            String retStr = HttpUtils.doPost(url, jsonObj, header);
 
             JSONObject result = JSONObject.parseObject(retStr);
             JSONArray choices = result.getJSONArray("choices");
@@ -81,7 +83,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
                         messages = new JSONArray();
                         messages.add(oneMessage);
                         jsonObj.put("messages", messages);
-                        retStr = HttpUtils.doPostWithProxy("https://api.deepseek.com/chat/completions", jsonObj, header);
+                        retStr = HttpUtils.doPost(url, jsonObj, header);
                         result = JSONObject.parseObject(retStr);
                         choices = result.getJSONArray("choices");
                         reply.setFooter("超出最大上下文上限，使用新上下文");
@@ -94,7 +96,7 @@ public class DefaultReplyServiceImpl implements DefaultReplyService {
             JSONObject choice = choices.getJSONObject(0);
 
             JSONObject retMsg = choice.getJSONObject("message");
-            String text = retMsg.getString("content").replaceAll("\n\n", "\n");
+            String text = retMsg.getString("content").replaceAll("\n\n", "\n").replaceFirst("\n", "");
             reply.setData(text);
 
             String finishReason = choice.getString("finish_reason");
